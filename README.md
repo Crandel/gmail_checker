@@ -1,6 +1,7 @@
 ## Gmail checker
 Create gmail checker written on go
-Put your nickname and password in ~/*.gmailrc* such way
+
+Put your nickname and password in *```~/.gmailrc```* such way
 ```
 **NICKNAME** : **PASSWORD**
 ```
