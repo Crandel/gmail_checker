@@ -1,26 +1,21 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"golang.org/x/net/html"
 	"io"
-	//"io/ioutil"
-	//"net/http"
+	"net/http"
 	"os"
-	//"strings"
-	//"regexp"
+	"text/template"
 )
 
-type Label struct {
-	Label    string `json:"label,omitempty"`
-	Short    string `json:"short_conky,omitempty"`
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
-}
-
-type Configuration struct {
-	Email *Label `json:"email"`
+type Account struct {
+	Account  string `json:"account"`
+	Short    string `json:"short_conky"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 func check(e error, str string) {
@@ -31,40 +26,32 @@ func check(e error, str string) {
 	}
 }
 
-func readSettings(str string) string {
+func readSettings() Account {
 	filename := fmt.Sprintf("%s/.gmail.json", os.Getenv("HOME"))
-	fmt.Println(filename)
 	content, err := os.Open(filename)
 	if err != nil {
-		fmt.Printf("%s, openError\n", err)
-		fmt.Println("pfff\n")
 		f, err := os.Create(filename)
 		check(err, "create")
 		defer f.Close()
-		ExampleLabel := &Label{
-			Label:    "exlabel",
-			Short:    "short",
-			Username: "Username",
-			Password: "Password",
+		exampleAccount := Account{
+			Account:  "ACCOUNT",
+			Short:    "SHORT",
+			Username: "USERNAME",
+			Password: "PASSWORD",
 		}
-		ExampleConf := &Configuration{
-			Email: ExampleLabel,
-		}
-		example_json, err := json.Marshal(ExampleConf)
-		fmt.Println(string(example_json))
+		example_json, err := json.Marshal(exampleAccount)
 		check(err, "Marshal")
 		f.WriteString(string(example_json))
-		//check(err, "Write")
-		return "A file ~/.gmail.json created, please fill username and password"
+		check(err, "Write")
+		return exampleAccount
 	} else {
 		params := json.NewDecoder(content)
-		configuration := Configuration{}
+		configuration := Account{}
 		err := params.Decode(&configuration)
 		check(err, "Decode")
-		fmt.Printf("%s\n", configuration.Email.Short)
-		return str
-	}
 
+		return configuration
+	}
 }
 
 func grep(str io.Reader) {
@@ -73,7 +60,7 @@ func grep(str io.Reader) {
 	var f func(*html.Node, bool)
 	f = func(n *html.Node, printText bool) {
 		if printText && n.Type == html.TextNode {
-			fmt.Printf("%q\n", n.Data)
+			fmt.Println(n.Data)
 		}
 		printText = printText || (n.Type == html.ElementNode && n.Data == "fullcount")
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -81,20 +68,16 @@ func grep(str io.Reader) {
 		}
 	}
 	f(doc, false)
-	//re := regexp.MustCompile("<fullcount>(.*?)</fullcount>")
-	//fmt.Println(re.FindString(str))
 }
 
 func main() {
-	base_url := "https://%s:%s@mail.google.com/mail/feed/atom"
-	readSettings(base_url)
-	//resp, err := http.Get(base_url)
-	//check(err, "Get")
-	//body, err := ioutil.ReadAll(resp.Body)
-	//if err != nil {
-	//	fmt.Printf("%s", err)
-	//	os.Exit(1)
-	//}
-	//grep(resp.Body)
-	//fmt.Printf(resp.Body)
+	base_url := "https://{{.Username}}:{{.Password}}@mail.google.com/mail/feed/atom"
+	configuration := readSettings()
+	t := template.New(configuration.Account)
+	t, _ = t.Parse(base_url)
+	buf := new(bytes.Buffer)
+	t.Execute(buf, configuration)
+	resp, err := http.Get(buf.String())
+	check(err, "Get")
+	grep(resp.Body)
 }
