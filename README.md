@@ -21,6 +21,8 @@ You need installed go.
 
 Just clone the repository and run
 ```
+go get golang.org/x/net/html
+
 go build gmail.go
 ```
 You get binary file gmail. You can put it to /usr/local/bin and run
