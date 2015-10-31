@@ -7,7 +7,8 @@ Put your nickname and password in *```~/.gmail.json```* such way
 ```
 > You must use first part of your email like this
 
-**USERNAME**@gmail.com
+> **USERNAME**@gmail.com
+
 
 account is label for account
 

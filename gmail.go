@@ -54,20 +54,22 @@ func readSettings() Account {
 	}
 }
 
-func grep(str io.Reader) {
+func grep(str io.Reader) string {
 	doc, err := html.Parse(str)
 	check(err, "Parse")
-	var f func(*html.Node, bool)
-	f = func(n *html.Node, printText bool) {
+	var count string
+	var f func(*html.Node, bool) string
+	f = func(n *html.Node, printText bool) string {
 		if printText && n.Type == html.TextNode {
-			fmt.Println(n.Data)
+			count = n.Data
 		}
 		printText = printText || (n.Type == html.ElementNode && n.Data == "fullcount")
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			f(c, printText)
 		}
+		return count
 	}
-	f(doc, false)
+	return f(doc, false)
 }
 
 func main() {
@@ -79,5 +81,6 @@ func main() {
 	t.Execute(buf, configuration)
 	resp, err := http.Get(buf.String())
 	check(err, "Get")
-	grep(resp.Body)
+	count := grep(resp.Body)
+	fmt.Printf("%[1]v:%[2]v", configuration.Short, count)
 }
