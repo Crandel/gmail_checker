@@ -1,36 +1,75 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"golang.org/x/net/html"
 	"io"
-	"io/ioutil"
+	//"io/ioutil"
 	//"net/http"
 	"os"
-	"strings"
-	//	"regexp"
+	//"strings"
+	//"regexp"
 )
 
-func readSettings(str string) string {
+type Label struct {
+	Label    string `json:"label,omitempty"`
+	Short    string `json:"short_conky,omitempty"`
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
+}
 
-	content, err := ioutil.ReadFile(fmt.Sprintf("%s/.gmailrc", os.Getenv("HOME")))
-	if err != nil {
-		fmt.Printf("%s", err)
+type Configuration struct {
+	Email *Label `json:"email"`
+}
+
+func check(e error, str string) {
+	if e != nil {
+		fmt.Printf("%s, %s\n", e, str)
+		panic(e)
 		os.Exit(1)
 	}
-	params := strings.Split(string(content), ":")
-	for i := 0; i < len(params); i++ {
-		fmt.Printf("%s", params[i])
+}
+
+func readSettings(str string) string {
+	filename := fmt.Sprintf("%s/.gmail.json", os.Getenv("HOME"))
+	fmt.Println(filename)
+	content, err := os.Open(filename)
+	if err != nil {
+		fmt.Printf("%s, openError\n", err)
+		fmt.Println("pfff\n")
+		f, err := os.Create(filename)
+		check(err, "create")
+		defer f.Close()
+		ExampleLabel := &Label{
+			Label:    "exlabel",
+			Short:    "short",
+			Username: "Username",
+			Password: "Password",
+		}
+		ExampleConf := &Configuration{
+			Email: ExampleLabel,
+		}
+		example_json, err := json.Marshal(ExampleConf)
+		fmt.Println(string(example_json))
+		check(err, "Marshal")
+		f.WriteString(string(example_json))
+		//check(err, "Write")
+		return "A file ~/.gmail.json created, please fill username and password"
+	} else {
+		params := json.NewDecoder(content)
+		configuration := Configuration{}
+		err := params.Decode(&configuration)
+		check(err, "Decode")
+		fmt.Printf("%s\n", configuration.Email.Short)
+		return str
 	}
-	return str
+
 }
 
 func grep(str io.Reader) {
 	doc, err := html.Parse(str)
-	if err != nil {
-		fmt.Printf("%s", err)
-		os.Exit(1)
-	}
+	check(err, "Parse")
 	var f func(*html.Node, bool)
 	f = func(n *html.Node, printText bool) {
 		if printText && n.Type == html.TextNode {
@@ -50,10 +89,7 @@ func main() {
 	base_url := "https://%s:%s@mail.google.com/mail/feed/atom"
 	readSettings(base_url)
 	//resp, err := http.Get(base_url)
-	//if err != nil {
-	//	fmt.Printf("%s", err)
-	//	os.Exit(1)
-	//}
+	//check(err, "Get")
 	//body, err := ioutil.ReadAll(resp.Body)
 	//if err != nil {
 	//	fmt.Printf("%s", err)
