@@ -16,6 +16,18 @@ short_conky - this text will show in conky
 
 if *```~/.gmail.json```* is not exist it will be created with example values
 
+# Install
+You need installed go.
+
+Just clone the repository and run
+```
+go build gmail.go
+```
+You get binary file gmail. You can put it to /usr/local/bin and run
+
+First time you run it, it create config file in *```~/.gmail.json```
+
+After this just put your data into config and create command for conky
 ### Issues
 Add multiple accounts
 
