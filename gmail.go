@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/net/html"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"regexp"
 	"text/template"
 )
 
@@ -54,22 +54,11 @@ func readSettings() Account {
 	}
 }
 
-func grep(str io.Reader) string {
-	doc, err := html.Parse(str)
-	check(err, "Parse")
-	var count string
-	var f func(*html.Node, bool) string
-	f = func(n *html.Node, printText bool) string {
-		if printText && n.Type == html.TextNode {
-			count = n.Data
-		}
-		printText = printText || (n.Type == html.ElementNode && n.Data == "fullcount")
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c, printText)
-		}
-		return count
-	}
-	return f(doc, false)
+func grep(str string) string {
+	r, _ := regexp.Compile(`<fullcount>(.*?)</fullcount>`)
+	substring := r.FindString(str)
+	re, _ := regexp.Compile(`[\d]`)
+	return re.FindString(substring)
 }
 
 func main() {
@@ -81,6 +70,8 @@ func main() {
 	t.Execute(buf, configuration)
 	resp, err := http.Get(buf.String())
 	check(err, "Get")
-	count := grep(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
+	check(err, "ioutil")
+	count := grep(string(body))
 	fmt.Printf("%[1]v:%[2]v", configuration.Short, count)
 }
