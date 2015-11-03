@@ -14,7 +14,7 @@ import (
 type Account struct {
 	Account  string `json:"account"`
 	Short    string `json:"short_conky"`
-	Username string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -26,9 +26,9 @@ func check(e error, str string) {
 	}
 }
 
-func readSettings() Account {
+func readSettings() []Account {
 	filename := fmt.Sprintf("%s/.gmail.json", os.Getenv("HOME"))
-	content, err := os.Open(filename)
+	content, err := ioutil.ReadFile(filename)
 	if err != nil {
 		f, err := os.Create(filename)
 		check(err, "create")
@@ -36,20 +36,19 @@ func readSettings() Account {
 		exampleAccount := Account{
 			Account:  "ACCOUNT",
 			Short:    "SHORT",
-			Username: "USERNAME",
+			Email:    "EMAIL@gmail.com",
 			Password: "PASSWORD",
 		}
-		example_json, err := json.Marshal(exampleAccount)
+		exAccounts := []Account{exampleAccount}
+		example_json, err := json.Marshal(exAccounts)
 		check(err, "Marshal")
 		f.WriteString(string(example_json))
 		check(err, "Write")
-		return exampleAccount
+		return exAccounts
 	} else {
-		params := json.NewDecoder(content)
-		configuration := Account{}
-		err := params.Decode(&configuration)
-		check(err, "Decode")
-
+		var configuration []Account
+		err := json.Unmarshal(content, &configuration)
+		check(err, "Unmarshal")
 		return configuration
 	}
 }
@@ -62,16 +61,18 @@ func grep(str string) string {
 }
 
 func main() {
-	base_url := "https://{{.Username}}:{{.Password}}@mail.google.com/mail/feed/atom"
+	base_url := "https://{{.Email}}:{{.Password}}@mail.google.com/mail/feed/atom"
 	configuration := readSettings()
-	t := template.New(configuration.Account)
-	t, _ = t.Parse(base_url)
-	buf := new(bytes.Buffer)
-	t.Execute(buf, configuration)
-	resp, err := http.Get(buf.String())
-	check(err, "Get")
-	body, err := ioutil.ReadAll(resp.Body)
-	check(err, "ioutil")
-	count := grep(string(body))
-	fmt.Printf("%[1]v:%[2]v", configuration.Short, count)
+	for index := range configuration {
+		t := template.New(configuration[index].Account)
+		t, _ = t.Parse(base_url)
+		buf := new(bytes.Buffer)
+		t.Execute(buf, configuration[index])
+		resp, err := http.Get(buf.String())
+		check(err, "Get")
+		body, err := ioutil.ReadAll(resp.Body)
+		check(err, "ioutil")
+		count := grep(string(body))
+		fmt.Printf("%[1]v:%[2]v ", configuration[index].Short, count)
+	}
 }
