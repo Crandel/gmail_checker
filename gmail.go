@@ -20,7 +20,6 @@ type Account struct {
 
 func check(e error, str string) {
 	if e != nil {
-		fmt.Printf("%s, %s\n", e, str)
 		panic(e)
 		os.Exit(1)
 	}
