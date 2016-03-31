@@ -18,7 +18,8 @@ type Account struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
-
+i
+// Error function
 func check(e error) {
 	if e != nil {
 		panic(e)
@@ -30,6 +31,7 @@ func readSettings() []Account {
 	content, err := ioutil.ReadFile(filename)
 	var listAccounts []Account
 	if err != nil {
+		// if file with configuration does`nt exists this part will create it
 		f, err := os.Create(filename)
 		check(err)
 		defer f.Close()
