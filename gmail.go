@@ -18,7 +18,7 @@ type Account struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
-i
+
 // Error function
 func check(e error) {
 	if e != nil {
