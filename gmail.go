@@ -21,6 +21,7 @@ type Account struct {
 	Password string `json:"password"`
 }
 
+// Error function
 func check(e error) {
 	if e != nil {
 		l3, err := syslog.New(syslog.LOG_ERR, "Go gmail")
@@ -37,6 +38,7 @@ func readSettings() []Account {
 	content, err := ioutil.ReadFile(filename)
 	var listAccounts []Account
 	if err != nil {
+		// if file with configuration does`nt exists this part will create it
 		f, err := os.Create(filename)
 		check(err)
 		defer f.Close()
