@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"log/syslog"
 	"net/http"
 	"os"
 	"regexp"
@@ -21,7 +23,12 @@ type Account struct {
 
 func check(e error) {
 	if e != nil {
-		panic(e)
+		l3, err := syslog.New(syslog.LOG_ERR, "Go gmail")
+		defer l3.Close()
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		l3.Err(e.Error())
 	}
 }
 
