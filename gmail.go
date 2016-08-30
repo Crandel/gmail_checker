@@ -29,7 +29,7 @@ func check(e error) {
 		if err != nil {
 			log.Fatal(err.Error())
 		}
-		l3.Err(e.Error())
+		log.Fatal(e.Error())
 	}
 }
 
@@ -65,7 +65,7 @@ func readSettings() []Account {
 func grep(str string) string {
 	r, _ := regexp.Compile(`<fullcount>(.*?)</fullcount>`)
 	substring := r.FindString(str)
-	re, _ := regexp.Compile(`[\d]`)
+	re, _ := regexp.Compile(`[\d+]`)
 	return re.FindString(substring)
 }
 
