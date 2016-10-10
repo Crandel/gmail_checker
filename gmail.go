@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"log/syslog"
 	"net/http"
 	"os"
 	"regexp"
 	"text/template"
 )
+
+// ListAccounts - list of accounts from config file
+var ListAccounts []Account
 
 // Account type - description of account
 type Account struct {
@@ -24,19 +26,13 @@ type Account struct {
 // Error function
 func check(e error) {
 	if e != nil {
-		l3, err := syslog.New(syslog.LOG_ERR, "Go gmail")
-		defer l3.Close()
-		if err != nil {
-			log.Fatal(err.Error())
-		}
 		log.Fatal(e.Error())
 	}
 }
 
-func readSettings() []Account {
+func init() {
 	filename := fmt.Sprintf("%s/.gmail.json", os.Getenv("HOME"))
 	content, err := ioutil.ReadFile(filename)
-	var listAccounts []Account
 	if err != nil {
 		// if file with configuration does`nt exists this part will create it
 		f, err := os.Create(filename)
@@ -48,41 +44,41 @@ func readSettings() []Account {
 			Email:    "EMAIL@gmail.com",
 			Password: "PASSWORD",
 		}
-		exAccounts := []Account{exampleAccount}
-		exampleJSON, err := json.Marshal(exAccounts)
+		listAccounts := []Account{exampleAccount}
+		exampleJSON, err := json.Marshal(listAccounts)
 		check(err)
 		f.WriteString(string(exampleJSON))
-		listAccounts = exAccounts
+		ListAccounts = listAccounts
 	} else {
-		var configuration []Account
-		err := json.Unmarshal(content, &configuration)
+		listAccounts := &ListAccounts
+		err := json.Unmarshal(content, listAccounts)
 		check(err)
-		listAccounts = configuration
 	}
-	return listAccounts
 }
 
 func grep(str string) string {
-	r, _ := regexp.Compile(`<fullcount>(.*?)</fullcount>`)
+	r, err := regexp.Compile(`<fullcount>(.*?)</fullcount>`)
+	check(err)
 	substring := r.FindString(str)
-	re, _ := regexp.Compile(`[\d+]`)
+	re, err := regexp.Compile(`[\d+]`)
+	check(err)
 	return re.FindString(substring)
 }
 
 func main() {
 	baseURL := "https://{{.Email}}:{{.Password}}@mail.google.com/mail/feed/atom"
-	configuration := readSettings()
-	for index := range configuration {
-		t := template.New(configuration[index].Account)
-		t, _ = t.Parse(baseURL)
+	for index := range ListAccounts {
+		t := template.New(ListAccounts[index].Account)
+		t, err := t.Parse(baseURL)
+		check(err)
 		buf := new(bytes.Buffer)
-		err := t.Execute(buf, configuration[index])
+		err := t.Execute(buf, ListAccounts[index])
 		check(err)
 		resp, err := http.Get(buf.String())
 		check(err)
 		body, err := ioutil.ReadAll(resp.Body)
 		check(err)
 		count := grep(string(body))
-		fmt.Printf("%[1]v:%[2]v ", configuration[index].Short, count)
+		fmt.Printf("%[1]v:%[2]v ", ListAccounts[index].Short, count)
 	}
 }
