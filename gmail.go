@@ -21,6 +21,7 @@ type Account struct {
 	Short    string `json:"short_conky"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	URL      string
 }
 
 // Error function
@@ -65,20 +66,36 @@ func grep(str string) string {
 	return re.FindString(substring)
 }
 
+// getMailCount - new goroutine for checking emails
+func getMailCount(channel chan<- string, acc Account) {
+	resp, err := http.Get(acc.URL)
+	check(err)
+	body, err := ioutil.ReadAll(resp.Body)
+	check(err)
+	count := grep(string(body))
+	channel <- fmt.Sprintf("%[1]v:%[2]v ", acc.Short, count)
+}
+
 func main() {
 	baseURL := "https://{{.Email}}:{{.Password}}@mail.google.com/mail/feed/atom"
-	for index := range ListAccounts {
-		t := template.New(ListAccounts[index].Account)
-		t, err := t.Parse(baseURL)
-		check(err)
-		buf := new(bytes.Buffer)
-		err := t.Execute(buf, ListAccounts[index])
-		check(err)
-		resp, err := http.Get(buf.String())
-		check(err)
-		body, err := ioutil.ReadAll(resp.Body)
-		check(err)
-		count := grep(string(body))
-		fmt.Printf("%[1]v:%[2]v ", ListAccounts[index].Short, count)
+	// Check if domain online
+	resp, err := http.Get("https://mail.google.com")
+	if err == nil || resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusMovedPermanently {
+		channel := make(chan string)
+		defer close(channel)
+		for _, acc := range ListAccounts {
+			t := template.New(acc.Account)
+			t, err := t.Parse(baseURL)
+			check(err)
+			buf := new(bytes.Buffer)
+			err = t.Execute(buf, acc)
+			check(err)
+			acc.URL = buf.String()
+			// separate all network requests to goroutines
+			go getMailCount(channel, acc)
+		}
+		for i := 0; i < len(ListAccounts); i++ {
+			fmt.Println(<-channel)
+		}
 	}
 }
