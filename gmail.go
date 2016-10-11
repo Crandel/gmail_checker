@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 	"text/template"
 )
 
@@ -94,8 +95,11 @@ func main() {
 			// separate all network requests to goroutines
 			go getMailCount(channel, acc)
 		}
-		for i := 0; i < len(ListAccounts); i++ {
-			fmt.Println(<-channel)
+		accLen := len(ListAccounts)
+		counts := make([]string, accLen)
+		for i := 0; i < accLen; i++ {
+			counts[i] = <-channel
 		}
+		fmt.Println(strings.Join(counts, ""))
 	}
 }
