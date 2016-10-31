@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,7 +10,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"text/template"
 )
 
 // ListAccounts - list of accounts from config file
@@ -22,7 +21,7 @@ type Account struct {
 	Short    string `json:"short_conky"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
-	URL      string
+	Token    string
 }
 
 // Error function
@@ -69,7 +68,12 @@ func grep(str string) string {
 
 // getMailCount - new goroutine for checking emails
 func getMailCount(channel chan<- string, acc Account) {
-	resp, err := http.Get(acc.URL)
+	url := "https://mail.google.com/mail/feed/atom"
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	check(err)
+	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", acc.Token))
+	resp, err := client.Do(req)
 	check(err)
 	body, err := ioutil.ReadAll(resp.Body)
 	check(err)
@@ -78,20 +82,14 @@ func getMailCount(channel chan<- string, acc Account) {
 }
 
 func main() {
-	baseURL := "https://{{.Email}}:{{.Password}}@mail.google.com/mail/feed/atom"
 	// Check if domain online
 	resp, err := http.Get("https://mail.google.com")
 	if err == nil || resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusMovedPermanently {
 		channel := make(chan string)
 		defer close(channel)
 		for _, acc := range ListAccounts {
-			t := template.New(acc.Account)
-			t, err := t.Parse(baseURL)
-			check(err)
-			buf := new(bytes.Buffer)
-			err = t.Execute(buf, acc)
-			check(err)
-			acc.URL = buf.String()
+			token := fmt.Sprintf("%s:%s", acc.Email, acc.Password)
+			acc.Token = base64.StdEncoding.EncodeToString([]byte(token))
 			// separate all network requests to goroutines
 			go getMailCount(channel, acc)
 		}
