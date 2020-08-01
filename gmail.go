@@ -17,11 +17,11 @@ var ListAccounts []Account
 
 // Account type - description of account
 type Account struct {
+	MailType string `json:"mail_type"`
 	Account  string `json:"account"`
 	Short    string `json:"short_conky"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
-	Token    string
 }
 
 // Error function
@@ -32,7 +32,7 @@ func check(e error) {
 }
 
 func init() {
-	filename := fmt.Sprintf("%s/.gmail.json", os.Getenv("HOME"))
+	filename := fmt.Sprintf("%s/.email.json", os.Getenv("HOME"))
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
 		// if file with configuration does`nt exists this part will create it
@@ -40,6 +40,7 @@ func init() {
 		check(err)
 		defer f.Close()
 		exampleAccount := Account{
+			MailType: "gmail",
 			Account:  "ACCOUNT",
 			Short:    "SHORT",
 			Email:    "EMAIL@gmail.com",
@@ -72,7 +73,9 @@ func getMailCount(channel chan<- string, acc Account) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	check(err)
-	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", acc.Token))
+	tokenStr := fmt.Sprintf("%s:%s", acc.Email, acc.Password)
+	token := base64.StdEncoding.EncodeToString([]byte(tokenStr))
+	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", token))
 	resp, err := client.Do(req)
 	check(err)
 	body, err := ioutil.ReadAll(resp.Body)
@@ -88,8 +91,6 @@ func main() {
 		channel := make(chan string)
 		defer close(channel)
 		for _, acc := range ListAccounts {
-			token := fmt.Sprintf("%s:%s", acc.Email, acc.Password)
-			acc.Token = base64.StdEncoding.EncodeToString([]byte(token))
 			// separate all network requests to goroutines
 			go getMailCount(channel, acc)
 		}

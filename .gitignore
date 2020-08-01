@@ -1,0 +1,24 @@
+.DS_Store
+*.db
+*.log
+log/
+
+custom/
+
+data/
+.idea/
+.#*
+*.iml
+*.exe
+*.exe~
+*.pem
+
+# vendor folders
+.vendor/*
+vendor/*
+!vendor/vendor.json
+!vendor/app/*
+
+# config
+config.json
+gmail
