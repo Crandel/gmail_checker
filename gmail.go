@@ -3,12 +3,12 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"regexp"
 	"strings"
 )
 
@@ -22,6 +22,23 @@ type Account struct {
 	Short    string `json:"short_conky"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type Feed struct {
+	XMLName   xml.Name `xml."feed"`
+	Xmlns     string   `xml."xmlns,attr"`
+	Version   string   `xml."version,attr"`
+	Title     string   `xml."name"`
+	Tagline   string   `xml."tagline"`
+	Fullcount string   `xml."fullcount"`
+	Link      Link     `xml."link"`
+}
+
+type Link struct {
+	XMLName xml.Name `xml."link"`
+	Rel     string   `xml."rel,attr"`
+	Href    string   `xml."href,attr"`
+	Type    string   `xml."type,attr"`
 }
 
 // Error function
@@ -58,13 +75,10 @@ func init() {
 	}
 }
 
-func grep(str string) string {
-	r, err := regexp.Compile(`<fullcount>(.*?)</fullcount>`)
-	check(err)
-	substring := r.FindString(str)
-	re, err := regexp.Compile(`[\d+]`)
-	check(err)
-	return re.FindString(substring)
+func extract_count(str string) string {
+	var feed Feed
+	xml.Unmarshal([]byte(str), &feed)
+	return feed.Fullcount
 }
 
 // getMailCount - new goroutine for checking emails
@@ -80,7 +94,7 @@ func getMailCount(channel chan<- string, acc Account) {
 	check(err)
 	body, err := ioutil.ReadAll(resp.Body)
 	check(err)
-	count := grep(string(body))
+	count := extract_count(string(body))
 	channel <- fmt.Sprintf("%[1]v:%[2]v ", acc.Short, count)
 }
 
