@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Crandel/gmail/internal/accounts"
+	"github.com/Crandel/gmail/internal/logging"
 	"github.com/Crandel/gmail/internal/mails"
 )
 
@@ -32,12 +33,17 @@ func getAccounts() accounts.ListAccounts {
 			Password: "PASSWORD",
 		}
 		listAccounts = append(listAccounts, exampleAccount)
-		exampleJSON, err := json.Marshal(listAccounts)
-		f.WriteString(string(exampleJSON))
-	} else {
-		err := json.Unmarshal(content, listAccounts)
+		var exampleJSON []byte
+		exampleJSON, err = json.Marshal(listAccounts)
+		_, err = f.WriteString(string(exampleJSON))
 		if err != nil {
-			slog.Debug("error during Unmarshal")
+			slog.Debug("error during writing string", slog.Any("error", err))
+		}
+	} else {
+		lAccs := &listAccounts
+		err := json.Unmarshal(content, lAccs)
+		if err != nil {
+			slog.Debug("error during Unmarshal", slog.Any("error", err))
 			return listAccounts
 		}
 	}
@@ -45,6 +51,15 @@ func getAccounts() accounts.ListAccounts {
 }
 
 func main() {
+	debug := os.Getenv("DEBUG")
+	logLevel := slog.LevelInfo
+	showSources := false
+	if debug == "1" {
+		showSources = true
+		logLevel = slog.LevelDebug
+	}
+
+	logging.InitLogger(logLevel, showSources)
 	// Check if domain online
 	resp, err := http.Get("https://mail.google.com")
 	if err == nil || resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusMovedPermanently {
