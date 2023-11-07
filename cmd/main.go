@@ -35,6 +35,9 @@ func getAccounts() accounts.ListAccounts {
 		listAccounts = append(listAccounts, exampleAccount)
 		var exampleJSON []byte
 		exampleJSON, err = json.Marshal(listAccounts)
+		if err != nil {
+			slog.Debug("error during marshalling", slog.Any("error", err))
+		}
 		_, err = f.WriteString(string(exampleJSON))
 		if err != nil {
 			slog.Debug("error during writing string", slog.Any("error", err))
