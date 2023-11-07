@@ -1,7 +1,7 @@
 package accounts
 
 // ListAccounts - list of accounts from config file
-var ListAccounts []Account
+type ListAccounts []Account
 
 // Account type - description of account
 type Account struct {

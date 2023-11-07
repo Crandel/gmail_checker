@@ -3,21 +3,26 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/Crandel/gmail/internal/accounts"
+	"github.com/Crandel/gmail/internal/mails"
 )
 
-func init() {
+func getAccounts() accounts.ListAccounts {
 	filename := fmt.Sprintf("%s/.email.json", os.Getenv("HOME"))
-	content, err := ioutil.ReadFile(filename)
+	content, err := os.ReadFile(filename)
+	listAccounts := accounts.ListAccounts{}
 	if err != nil {
 		// if file with configuration does`nt exists this part will create it
 		f, err := os.Create(filename)
-		check(err)
+		if err != nil {
+			slog.Debug("error during creation file")
+			return listAccounts
+		}
 		defer f.Close()
 		exampleAccount := accounts.Account{
 			MailType: "gmail",
@@ -26,14 +31,17 @@ func init() {
 			Email:    "EMAIL@gmail.com",
 			Password: "PASSWORD",
 		}
-		listAccounts := []accounts.Account{exampleAccount}
+		listAccounts = append(listAccounts, exampleAccount)
 		exampleJSON, err := json.Marshal(listAccounts)
 		f.WriteString(string(exampleJSON))
-		ListAccounts = listAccounts
 	} else {
-		listAccounts := &ListAccounts
 		err := json.Unmarshal(content, listAccounts)
+		if err != nil {
+			slog.Debug("error during Unmarshal")
+			return listAccounts
+		}
 	}
+	return listAccounts
 }
 
 func main() {
@@ -42,11 +50,12 @@ func main() {
 	if err == nil || resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusMovedPermanently {
 		channel := make(chan string)
 		defer close(channel)
-		for _, acc := range ListAccounts {
+		listAccounts := getAccounts()
+		for _, acc := range listAccounts {
 			// separate all network requests to goroutines
-			go extractors.GetMailCount(channel, acc)
+			go mails.GetMailCount(channel, acc)
 		}
-		accLen := len(ListAccounts)
+		accLen := len(listAccounts)
 		counts := make([]string, accLen)
 		for i := 0; i < accLen; i++ {
 			counts[i] = <-channel
