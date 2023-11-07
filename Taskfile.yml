@@ -1,0 +1,35 @@
+version: '3'
+
+
+# global environmental variables
+env:
+  DEBUG: 1
+
+tasks:
+  default:
+    deps: [build, test]
+    desc: Builds and tests all components
+
+  help:
+    cmds:
+      - cmd: "gmail"
+        silent: true
+
+
+  # # run this task before each other task
+
+  # build tasks
+  build:
+    desc: Builds the project
+    cmds:
+      - cmd: echo "Building ..."
+        silent: true
+      - cmd: go build -o ./bin/gmail ./cmd/main.go
+
+  # test tasks
+  test:
+    desc: Tests project
+    cmds:
+      - cmd: echo "Testing project"
+        silent: true
+      - cmd: go test -p 1 -count=1 -cover -coverprofile=unit.coverage.out ./...
