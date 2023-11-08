@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -12,6 +13,8 @@ import (
 	"github.com/Crandel/gmail/internal/mails"
 )
 
+const gmailUrl = "https://mail.google.com"
+
 func main() {
 	debug := os.Getenv("DEBUG")
 	logLevel := slog.LevelInfo
@@ -22,8 +25,16 @@ func main() {
 	}
 
 	logging.InitLogger(logLevel, showSources)
+	createFlag := flag.Bool("create", false, "Create example configuration")
+
+	flag.Parse()
+
+	if *createFlag {
+		config.CreateConfig()
+		return
+	}
 	// Check if domain online
-	resp, err := http.Get("https://mail.google.com")
+	resp, err := http.Get(gmailUrl)
 	if err == nil || resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusMovedPermanently {
 		channel := make(chan string)
 		defer close(channel)
