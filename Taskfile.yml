@@ -12,13 +12,10 @@ tasks:
 
   help:
     cmds:
-      - cmd: "gmail"
+      - cmd: echo "Run .bin/gmail binary in order to get inbox counts your gmail accounts"
         silent: true
 
-
-  # # run this task before each other task
-
-  # build tasks
+  # build project
   build:
     desc: Builds the project
     cmds:
@@ -26,10 +23,18 @@ tasks:
         silent: true
       - cmd: go build -o ./bin/gmail ./cmd/main.go
 
-  # test tasks
+  # test project
   test:
     desc: Tests project
     cmds:
       - cmd: echo "Testing project"
         silent: true
       - cmd: go test -p 1 -count=1 -cover -coverprofile=unit.coverage.out ./...
+
+  # start project
+  start:
+    desc: Run gmail
+    cmds:
+      - task: build
+        silent: true
+      - cmd: ./bin/gmail
