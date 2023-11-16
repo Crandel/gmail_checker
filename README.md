@@ -1,31 +1,50 @@
-## Gmail checker for conky
-Create gmail checker written on go
+# Gmail checker for unread messages
 
-Put your nickname and password in *```~/.gmail.json```* such way
-```json
-{"account":"ACCOUNT","short_conky":"SHORT","email":"example@gmail.com","password":"PASSWORD"}
+### For i3status-rust
+
+I use i3/Sway wm and want to have a notification for new emails in i3 status line.
+
+Without **.email.json** it will fail.
+
+In order to create **.email.json** file with this structure.
+
+```bash
+$ bin/gmail -create
 ```
 
-account is label for account
+This command will create sample config file with this content
 
-short_conky - this text will show in conky
+```json
+[
+    {
+        "mail_type": "gmail",
+        "account": "account_name",
+        "short_alias":"A",
+        "client_id": "<client_id>",
+        "client_secret": "<client_secret>"
+    }
+]
+```
 
-if *```~/.gmail.json```* is not exist it will be created with example values
+Just edit this file.
+You could use several gmail accounts to have a personal and work notifications.
+Unread count is available as `dbus` message.
 
 # Install
 You need installed go.
 
 Just clone the repository and run
+
+```bash
+go build -o ./bin/gmail ./cmd/main.go
 ```
-go build gmail.go
+
+Or use go-task for this
+
+```bash
+task build
 ```
+
 You get binary file gmail. You can put it to /usr/local/bin and run
 
-First time you run it, it create config file in *```~/.gmail.json```*
-
-After this just put your data into config and create command for conky
-
-You can use multiple accounts, just make shure *```~/.gmail.json```* has valid json format
-
-#License
-MIT License. Copyright (c) 2013-2015 Vitaliy Drevenchuk.
+You can use multiple accounts, just make shure `~/.email.json` has valid json format
