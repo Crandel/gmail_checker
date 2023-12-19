@@ -1,4 +1,4 @@
-package mails
+package gmail
 
 import (
 	"fmt"
@@ -8,12 +8,21 @@ import (
 
 	"github.com/Crandel/gmail/internal/accounts"
 	"github.com/Crandel/gmail/internal/extractors"
+	"golang.org/x/oauth2"
 )
 
-const url = "https://mail.google.com/mail/feed/atom"
+type GMailParams struct {
+	accounts.Account
+	oauth2.Config
+}
+
+const (
+	url  = "https://mail.google.com/mail/feed/atom"
+	Type = "gmail"
+)
 
 // GetMailCount - new goroutine for checking emails
-func GetMailCount(channel chan<- string, acc accounts.Account) {
+func GetGMailCount(channel chan<- string, mailParams GMailParams) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -29,5 +38,5 @@ func GetMailCount(channel chan<- string, acc accounts.Account) {
 		slog.Debug("error during response parsing", slog.Any("error", err))
 	}
 	count := extractors.ExtractCount(string(body))
-	channel <- fmt.Sprintf("%[1]v:%[2]v ", acc.Alias, count)
+	channel <- fmt.Sprintf("alias:%v ", count)
 }

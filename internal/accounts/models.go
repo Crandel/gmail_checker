@@ -7,6 +7,5 @@ type ListAccounts []Account
 type Account struct {
 	MailType string `json:"mail_type"`
 	Email    string `json:"email"`
-	Alias    string `json:"alias"`
 	ClientID string `json:"client_id"`
 }
