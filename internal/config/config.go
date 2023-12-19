@@ -39,12 +39,12 @@ func CreateConfig() {
 		slog.Debug("error during creation file")
 	}
 	defer f.Close()
+
 	exampleAccount := accounts.Account{
 		MailType: "gmail",
-		Account:  "ACCOUNT",
-		Short:    "SHORT",
-		Email:    "EMAIL@gmail.com",
-		Password: "PASSWORD",
+		Email:    "ACCOUNT",
+		Alias:    "SHORT",
+		ClientID: "client id",
 	}
 
 	listAccounts := accounts.ListAccounts{exampleAccount}

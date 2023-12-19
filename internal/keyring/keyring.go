@@ -1,28 +1,28 @@
 package keyring
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/zalando/go-keyring"
 )
 
 const service = "gmail_checker"
 
-func GetEntry(key string) string {
+func GetEntry(key string) (string, error) {
 	// get password
 	secret, err := keyring.Get(service, key)
 	if err != nil {
-		log.Fatal(err)
+		slog.Debug("can't get credentials from keyring", slog.Any("error", err))
+		return "", err
 	}
-	return secret
+	return secret, nil
 }
 
-func SetEntry(key string, data string) bool {
-
+func SetEntry(key string, data string) error {
 	err := keyring.Set(service, key, data)
 	if err != nil {
-		log.Fatal(err)
-		return false
+		slog.Debug("can't save credentials to keyring", slog.Any("error", err))
+		return err
 	}
-	return true
+	return nil
 }

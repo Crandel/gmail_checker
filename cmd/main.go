@@ -11,6 +11,7 @@ import (
 	"github.com/Crandel/gmail/internal/config"
 	"github.com/Crandel/gmail/internal/logging"
 	"github.com/Crandel/gmail/internal/mails"
+	"github.com/Crandel/gmail/internal/oauth"
 )
 
 const gmailUrl = "https://mail.google.com"
@@ -26,12 +27,17 @@ func main() {
 
 	logging.InitLogger(logLevel, showSources)
 	createFlag := flag.Bool("create", false, "Create example configuration")
+	loadPathFlag := flag.String("load", "", "Load credentials.json")
 
 	flag.Parse()
 
 	if *createFlag {
 		config.CreateConfig()
 		return
+	}
+	if loadPathFlag != nil && *loadPathFlag != "" {
+		fmt.Printf("The path is: /n%s/n", *loadPathFlag)
+		oauth.SaveConfig(*loadPathFlag)
 	}
 	// Check if domain online
 	resp, err := http.Get(gmailUrl)
