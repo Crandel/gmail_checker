@@ -46,6 +46,10 @@ func main() {
 		defer close(channel)
 		listAccounts := config.GetAccounts()
 		for _, acc := range listAccounts {
+			config, err := oauth.GetConfig(acc.ClientID)
+			if err != nil {
+				slog.Debug("can't get config", slog.Any("error", err))
+			}
 			// separate all network requests to goroutines
 			go mails.GetMailCount(channel, acc)
 		}
