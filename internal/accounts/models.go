@@ -6,8 +6,7 @@ type ListAccounts []Account
 // Account type - description of account
 type Account struct {
 	MailType string `json:"mail_type"`
-	Account  string `json:"account"`
-	Short    string `json:"short_conky"`
 	Email    string `json:"email"`
-	Password string `json:"password"`
+	Alias    string `json:"alias"`
+	ClientID string `json:"client_id"`
 }
