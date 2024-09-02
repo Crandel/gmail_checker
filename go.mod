@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/lmittmann/tint v1.0.3
-	github.com/zalando/go-keyring v0.2.3
+	github.com/zalando/go-keyring v0.2.5
 )
 
 require (
