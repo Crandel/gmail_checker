@@ -3,7 +3,7 @@ module github.com/Crandel/gmail
 go 1.21
 
 require (
-	github.com/lmittmann/tint v1.0.3
+	github.com/lmittmann/tint v1.0.5
 	github.com/zalando/go-keyring v0.2.5
 )
 
