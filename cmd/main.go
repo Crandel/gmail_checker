@@ -15,7 +15,7 @@ import (
 
 	"github.com/Crandel/gmail/internal/config"
 	"github.com/Crandel/gmail/internal/logging"
-	"github.com/Crandel/gmail/internal/mails/gmail"
+	"github.com/Crandel/gmail/internal/mails/googlemail"
 )
 
 const gmailUrl = "https://mail.google.com"
@@ -43,7 +43,7 @@ func main() {
 
 	if loadPathFlag != nil && *loadPathFlag != "" {
 		fmt.Printf("The path is: /n %s /n", *loadPathFlag)
-		err := gmail.SaveConfig(*loadPathFlag)
+		err := googlemail.SaveConfig(*loadPathFlag)
 		if err != nil {
 			slog.Error("Can't save config")
 		}
@@ -62,14 +62,14 @@ func main() {
 		defer close(channel)
 		listAccounts := config.GetAccounts()
 		for _, acc := range listAccounts {
-			if acc.MailType == gmail.Type {
-				config, err := gmail.GetConfig(acc.ClientID)
+			if acc.MailType == googlemail.Type {
+				config, err := googlemail.GetConfig(acc.ClientID)
 				if err != nil {
 					slog.Debug("can't get config", slog.Any("error", err))
 				}
 				// separate all network requests to goroutines
 
-				client, err := gmail.GetClient(config)
+				client, err := googlemail.GetClient(config)
 				if err != nil {
 					slog.Debug("can't load client for client id: "+acc.ClientID, slog.Any("error", err))
 					continue
@@ -120,7 +120,7 @@ func addNewUser() {
 		fmt.Println("There are no account with this client id. Please try another client id")
 		return
 	}
-	config, err := gmail.GetConfig(clientID)
+	config, err := googlemail.GetConfig(clientID)
 	if err != nil {
 		fmt.Println("can't get config for this client id. Please try another client id")
 		return
@@ -133,7 +133,7 @@ func addNewUser() {
 		fmt.Println("An error occured while reading input. Please try again", err)
 		return
 	}
-	err = gmail.SaveToken(config, alias)
+	err = googlemail.SaveToken(config, alias)
 	if err != nil {
 		fmt.Println("error saving token to keyring", err)
 	}
