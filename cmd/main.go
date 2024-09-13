@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -45,7 +46,7 @@ func main() {
 		fmt.Printf("The path is: /n %s /n", *loadPathFlag)
 		err := googlemail.SaveConfig(*loadPathFlag)
 		if err != nil {
-			slog.Error("Can't save config")
+			log.Fatal("Can't save config")
 		}
 	}
 
@@ -86,7 +87,7 @@ func main() {
 					slog.Debug("Unable to retrieve labels", slog.Any("error", err))
 				}
 				if len(r.Labels) == 0 {
-					fmt.Println("No labels found.")
+					slog.Debug("No labels found.")
 					return
 				}
 				fmt.Println("Labels:")
