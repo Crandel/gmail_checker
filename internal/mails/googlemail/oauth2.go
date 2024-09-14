@@ -76,6 +76,7 @@ func saveToken(key string, token *oauth2.Token) error {
 	}
 	return keyring.SetEntry(key, string(tokenByte))
 }
+
 func startServer() chan string {
 	codeChan := make(chan string)
 	server := &http.Server{Addr: ":8080"}
@@ -91,7 +92,7 @@ func startServer() chan string {
 
 	go func() {
 		if err := server.ListenAndServe(); err != http.ErrServerClosed {
-			slog.Error("HTTP server ListenAndServe: %v", err)
+			slog.Error("HTTP server ListenAndServe", slog.Any("error", err))
 			return
 		}
 	}()

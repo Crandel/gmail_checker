@@ -5,29 +5,14 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
-	"slices"
+	"strings"
 
-	libGmail "google.golang.org/api/gmail/v1"
-	"google.golang.org/api/option"
-
+	"github.com/Crandel/gmail/internal/accounts"
 	"github.com/Crandel/gmail/internal/config"
 	"github.com/Crandel/gmail/internal/logging"
 	"github.com/Crandel/gmail/internal/mails/googlemail"
 )
-
-const (
-	gmailUrl = "https://mail.google.com"
-)
-
-var requiredLabels = []string{
-	"INBOX",
-	"TRASH",
-	"SPAM",
-	"Github",
-	"Delivery",
-}
 
 func main() {
 	ctx := context.Background()
@@ -49,65 +34,22 @@ func main() {
 		return
 	}
 
-	// Check if domain online
-	resp, err := http.Get(gmailUrl)
-
-	if err == nil || resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusMovedPermanently {
-		channel := make(chan string)
-		defer close(channel)
-		listAccounts := config.GetAccounts()
-		for _, acc := range listAccounts {
-			if acc.MailType == googlemail.Type {
-				config, err := googlemail.GetConfig(acc.ClientID, acc.ClientSecret)
-				if err != nil {
-					slog.Debug("can't load config from credentials", slog.Any("error", err))
-					continue
-				}
-				// separate all network requests to goroutines
-				client, err := googlemail.GetClient(ctx, config)
-				if err != nil {
-					slog.Debug("can't load client for client id: "+acc.ClientID, slog.Any("error", err))
-					continue
-				}
-
-				srv, err := libGmail.NewService(ctx, option.WithHTTPClient(client))
-				if err != nil {
-					slog.Debug("Unable to retrieve Gmail client", slog.Any("error", err))
-				}
-
-				user := "me"
-				fmt.Printf("srv. users")
-				r, err := srv.Users.Labels.List(user).Do()
-				if err != nil {
-					slog.Debug("Unable to retrieve labels", slog.Any("error", err))
-				}
-				if len(r.Labels) == 0 {
-					slog.Debug("No labels found.")
-					return
-				}
-				fmt.Println("Labels:")
-				for _, l := range r.Labels {
-					if slices.Contains(requiredLabels, l.Name) {
-						ll, err := srv.Users.Labels.Get(user, l.Id).Do()
-						if err != nil {
-							slog.Debug("label get ", slog.Any("error", err))
-						} else {
-							fmt.Printf("%s: %d\n", ll.Name, ll.MessagesUnread)
-						}
-					}
-				}
-				// ms, err := srv.Users.Messages.List(user).Do()
-				// for _, m := range ms.Messages {
-				// 	fmt.Printf("\nmessage id %s\n", m.Id)
-				// }
+	channel := make(chan string)
+	defer close(channel)
+	listAccounts := config.GetAccounts()
+	for _, acc := range listAccounts {
+		if acc.MailType == accounts.Gmail {
+			if googlemail.CheckOnline() {
+				go googlemail.GetGMailCount(ctx, channel, acc)
 			}
 		}
-		// accLen := len(listAccounts)
-		// counts := make([]string, accLen)
-		// for i := 0; i < accLen; i++ {
-		// 	counts[i] = <-channel
-		// }
-		// fmt.Println(strings.Join(counts, ""))
+
 	}
-	slog.Debug("finish")
+
+	accLen := len(listAccounts)
+	counts := make([]string, accLen)
+	for i := 0; i < accLen; i++ {
+		counts[i] = <-channel
+	}
+	fmt.Println(strings.Join(counts, ""))
 }

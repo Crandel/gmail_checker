@@ -101,7 +101,8 @@ func addNewUser() (accounts.Account, error) {
 	if err != nil {
 		return accounts.Account{}, err
 	}
-	if mailType != "gmail" {
+	mailT := accounts.MailType(mailType)
+	if mailT != accounts.Gmail {
 		return accounts.Account{}, errors.New("mail type should be only gmail")
 	}
 
@@ -127,7 +128,7 @@ func addNewUser() (accounts.Account, error) {
 
 	return accounts.Account{
 		Short:        mailAlias,
-		MailType:     mailType,
+		MailType:     mailT,
 		Email:        email,
 		ClientID:     clientId,
 		ClientSecret: clientSecret,
