@@ -2,6 +2,7 @@ package googlemail
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/Crandel/gmail/internal/config"
@@ -21,10 +22,11 @@ func GetConfig(clientID, clientSecret string) (*oauth2.Config, error) {
 		return nil, fmt.Errorf("unable to read client secret file: %v", err)
 	}
 
-	config, err := google.ConfigFromJSON(b, gmail.GmailReadonlyScope)
+	config, err := google.ConfigFromJSON(b, gmail.GmailMetadataScope)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse client secret file to config: %v", err)
 	}
+	slog.Debug("config", slog.Any("conf", config))
 
 	return config, nil
 }

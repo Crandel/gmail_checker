@@ -65,6 +65,7 @@ func main() {
 				}
 
 				user := "me"
+				fmt.Printf("srv. users")
 				r, err := srv.Users.Labels.List(user).Do()
 				if err != nil {
 					slog.Debug("Unable to retrieve labels", slog.Any("error", err))
@@ -75,7 +76,7 @@ func main() {
 				}
 				fmt.Println("Labels:")
 				for _, l := range r.Labels {
-					fmt.Printf("%s: %d\n", l.Name, l.MessagesUnread)
+					fmt.Printf("%s: %d - %d\n", l.Name, l.MessagesUnread, l.MessagesTotal)
 				}
 			}
 		}

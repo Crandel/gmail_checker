@@ -18,7 +18,7 @@ const (
 // Retrieve a token, saves the token, then returns the generated client.
 func GetClient(ctx context.Context, config *oauth2.Config) (*http.Client, error) {
 	token, err := tokenFromKeyring(ctx, config)
-	if err != nil {
+	if err != nil && token == nil {
 		return nil, err
 	}
 	return config.Client(ctx, token), nil
@@ -68,7 +68,7 @@ func tokenFromKeyring(ctx context.Context, config *oauth2.Config) (*oauth2.Token
 
 // Saves a token to a file path.
 func saveToken(key string, token *oauth2.Token) error {
-	slog.Debug("Saving credentials  to keyring")
+	slog.Debug("Saving credentials  to keyring with expiry date: " + token.Expiry.String())
 	tokenByte, err := json.Marshal(token)
 	if err != nil {
 		slog.Debug("Error during marshalling token", slog.Any("error", err))
