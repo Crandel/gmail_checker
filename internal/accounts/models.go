@@ -9,9 +9,8 @@ type ListAccounts []Account
 
 // Account type - description of account
 type Account struct {
-	Short        string   `json:"short"`
-	MailType     MailType `json:"mail_type"`
-	Email        string   `json:"email"`
-	ClientID     string   `json:"client_id"`
-	ClientSecret string   `json:"client_secret"`
+	ClientID string   `json:"client_id"`
+	Email    string   `json:"email"`
+	MailType MailType `json:"mail_type"`
+	Short    string   `json:"short"`
 }

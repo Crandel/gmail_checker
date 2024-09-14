@@ -9,7 +9,7 @@ Without **$XDG_CONFIG_HOME/mail_checker/config.json** it will fail.
 In order to create `config.json` file with this structure.
 
 ```bash
-$ bin/gmail -create
+$ bin/mail -add
 ```
 
 This command will create sample config file with this content
@@ -17,17 +17,17 @@ This command will create sample config file with this content
 ```json
 [
     {
-        "mail_type": "gmail",
-        "account": "account_name",
-        "short_alias":"A",
-        "client_id": "<client_id>",
-        "client_secret": "<client_secret>"
+        "client_id":     "<client_id>",
+        "mail_type":     "gmail",
+        "email":         "<email address>",
+        "short":         "A",
     }
 ]
 ```
 
 Just edit this file.
 You could use several gmail accounts to have a personal and work notifications.
+Also you need to put `<client id>.json` file, with your [credentials](https://developers.google.com/identity/protocols/oauth2/native-app) to the same directory as `config.json`.
 Unread count is available as `dbus` message.
 
 # Install
@@ -47,4 +47,4 @@ task build
 
 You get binary file mail. You can put it to /usr/local/bin and run
 
-You can use multiple accounts, just make shure `$XDG_CONFIG_HOME/mail_checker/config.json` has valid json format
+You can use multiple accounts, just make sure `$XDG_CONFIG_HOME/mail_checker/config.json` has valid json format

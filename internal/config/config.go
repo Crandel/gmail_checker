@@ -119,18 +119,11 @@ func addNewUser() (accounts.Account, error) {
 	if err != nil {
 		return accounts.Account{}, err
 	}
-	fmt.Println("Please add oauth2 clientSecret")
-	clientSecret, err := reader.ReadString('\n')
-	clientSecret = strings.Trim(clientSecret, "\n")
-	if err != nil {
-		return accounts.Account{}, err
-	}
 
 	return accounts.Account{
-		Short:        mailAlias,
-		MailType:     mailT,
-		Email:        email,
-		ClientID:     clientId,
-		ClientSecret: clientSecret,
+		Short:    mailAlias,
+		MailType: mailT,
+		Email:    email,
+		ClientID: clientId,
 	}, nil
 }

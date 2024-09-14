@@ -34,7 +34,7 @@ func CheckOnline() bool {
 
 // GetMailCount - new goroutine for checking emails
 func GetGMailCount(ctx context.Context, channel chan<- string, acc accounts.Account) {
-	config, err := GetConfig(acc.ClientID, acc.ClientSecret)
+	config, err := GetConfig(acc.ClientID)
 	if err != nil {
 		slog.Debug("can't load config from credentials", slog.Any("error", err))
 		return
