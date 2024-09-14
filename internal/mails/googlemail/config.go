@@ -8,7 +8,7 @@ import (
 	"github.com/Crandel/gmail/internal/config"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"google.golang.org/api/gmail/v1"
+	libGmail "google.golang.org/api/gmail/v1"
 )
 
 const credentialsName = "credentials.json"
@@ -22,7 +22,7 @@ func GetConfig(clientID, clientSecret string) (*oauth2.Config, error) {
 		return nil, fmt.Errorf("unable to read client secret file: %v", err)
 	}
 
-	config, err := google.ConfigFromJSON(b, gmail.GmailMetadataScope)
+	config, err := google.ConfigFromJSON(b, libGmail.GmailMetadataScope)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse client secret file to config: %v", err)
 	}
