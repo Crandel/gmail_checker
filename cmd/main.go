@@ -1,21 +1,21 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"strings"
 
+	"github.com/Crandel/gmail/internal/accounts"
 	"github.com/Crandel/gmail/internal/config"
 	"github.com/Crandel/gmail/internal/logging"
-	"github.com/Crandel/gmail/internal/mails"
+	"github.com/Crandel/gmail/internal/mails/googlemail"
 )
 
-const gmailUrl = "https://mail.google.com"
-
 func main() {
+	ctx := context.Background()
 	debug := os.Getenv("DEBUG")
 	logLevel := slog.LevelInfo
 	showSources := false
@@ -25,29 +25,31 @@ func main() {
 	}
 
 	logging.InitLogger(logLevel, showSources)
-	createFlag := flag.Bool("create", false, "Create example configuration")
+	addUserFlag := flag.Bool("add", false, "Add new user to specific mail client")
 
 	flag.Parse()
 
-	if *createFlag {
-		config.CreateConfig()
+	if *addUserFlag {
+		config.AddToConfig()
 		return
 	}
-	// Check if domain online
-	resp, err := http.Get(gmailUrl)
-	if err == nil || resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusMovedPermanently {
-		channel := make(chan string)
-		defer close(channel)
-		listAccounts := config.GetAccounts()
-		for _, acc := range listAccounts {
-			// separate all network requests to goroutines
-			go mails.GetMailCount(channel, acc)
+
+	channel := make(chan string)
+	defer close(channel)
+	listAccounts := config.GetAccounts()
+	for _, acc := range listAccounts {
+		if acc.MailType == accounts.Gmail {
+			if googlemail.CheckOnline() {
+				go googlemail.GetGMailCount(ctx, channel, acc)
+			}
 		}
-		accLen := len(listAccounts)
-		counts := make([]string, accLen)
-		for i := 0; i < accLen; i++ {
-			counts[i] = <-channel
-		}
-		fmt.Println(strings.Join(counts, ""))
+
 	}
+
+	accLen := len(listAccounts)
+	counts := make([]string, accLen)
+	for i := 0; i < accLen; i++ {
+		counts[i] = <-channel
+	}
+	fmt.Println(strings.Join(counts, ""))
 }
