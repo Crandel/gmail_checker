@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -30,7 +29,6 @@ func main() {
 
 	logging.InitLogger(logLevel, showSources)
 	createFlag := flag.Bool("config", false, "Update configuration with new mail client")
-	loadPathFlag := flag.String("load", "", "Load credentials.json")
 	addUserFlag := flag.Bool("add", false, "Add new user to specific mail client")
 
 	flag.Parse()
@@ -38,14 +36,6 @@ func main() {
 	if *createFlag {
 		config.AddToConfig()
 		return
-	}
-
-	if loadPathFlag != nil && *loadPathFlag != "" {
-		fmt.Printf("The path is: /n %s /n", *loadPathFlag)
-		err := googlemail.SaveConfig(*loadPathFlag)
-		if err != nil {
-			log.Fatal("Can't save config")
-		}
 	}
 
 	if *addUserFlag {
@@ -62,10 +52,7 @@ func main() {
 		listAccounts := config.GetAccounts()
 		for _, acc := range listAccounts {
 			if acc.MailType == googlemail.Type {
-				config, err := googlemail.GetConfig(acc.ClientID)
-				if err != nil {
-					slog.Debug("can't get config", slog.Any("error", err))
-				}
+				config := googlemail.GetConfig(acc.ClientID, acc.ClientSecret)
 				// separate all network requests to goroutines
 
 				client, err := googlemail.GetClient(config)

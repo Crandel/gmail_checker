@@ -6,17 +6,13 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 
 	"github.com/Crandel/gmail/internal/keyring"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/gmail/v1"
 )
 
 const (
-	tokKey    = "gmailTokenKey"
-	configKey = "gmailConfigKey"
+	tokKey = "gmailTokenKey"
 )
 
 type GmailUser struct {
@@ -24,29 +20,8 @@ type GmailUser struct {
 	Alias string
 }
 
-func SaveConfig(path string) error {
-	credJSON, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	var config *oauth2.Config
-	config, err = google.ConfigFromJSON(credJSON, gmail.GmailReadonlyScope)
-	if err != nil {
-		slog.Error("Error during reading config from file", slog.Any("error", err))
-	}
-	slog.Debug("Saving config to keyring", slog.String("client id", config.ClientID))
-	key := configKey + config.ClientID
-	configByte, err := json.Marshal(config)
-	if err != nil {
-		slog.Debug("Error during marshalling config", slog.Any("error", err))
-		return err
-	}
-	return keyring.SetEntry(key, string(configByte))
-}
-
 func SaveToken(config *oauth2.Config, alias string) error {
-	key := configKey + config.ClientID
+	key := tokKey + config.ClientID
 
 	tok := getTokenFromWeb(config)
 	gmailUser := GmailUser{
@@ -59,18 +34,6 @@ func SaveToken(config *oauth2.Config, alias string) error {
 		slog.Debug("can't save token to keyring", slog.Any("error", err))
 	}
 	return err
-}
-
-func GetConfig(clientID string) (*oauth2.Config, error) {
-	config := &oauth2.Config{}
-	key := configKey + clientID
-	configStr, err := keyring.GetEntry(key)
-	if err != nil {
-		slog.Debug("can't get config from keyring", slog.Any("error", err))
-		return nil, err
-	}
-	err = json.Unmarshal([]byte(configStr), config)
-	return config, err
 }
 
 // Retrieve a token, saves the token, then returns the generated client.
