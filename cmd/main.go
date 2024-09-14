@@ -35,6 +35,7 @@ func main() {
 
 	if *addUserFlag {
 		config.AddToConfig()
+		return
 	}
 
 	// Check if domain online

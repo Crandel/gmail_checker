@@ -52,32 +52,33 @@ func AddToConfig() {
 	}
 
 	// if file with configuration doesn`t exists this part will create it
-	f, err := os.Open(filename)
+	origFile, err := os.Open(filename)
 	if errors.Is(err, os.ErrNotExist) {
-		f, err = os.Create(filename)
+		origFile, err = os.Create(filename)
 		if err != nil {
-			slog.Debug("error during creation file")
+			slog.Debug("error during creation file", slog.String("filename", filename))
 		}
 	} else {
 		// If file already exists, read it's content
-		err = json.NewDecoder(f).Decode(&listAccounts)
+		err = json.NewDecoder(origFile).Decode(&listAccounts)
 		if err != nil {
 			slog.Debug("error during Unmarshal", slog.Any("error", err))
 		}
 	}
-	defer f.Close()
+	origFile.Close()
 	newAccount, err := addNewUser()
 	if err != nil {
 		fmt.Println("An error occured while reading input. Please try again", err)
 		return
 	}
 	listAccounts = append(listAccounts, newAccount)
+	slog.Debug("Accounts list", slog.Any("list", listAccounts))
 	var newJSON []byte
 	newJSON, err = json.Marshal(listAccounts)
 	if err != nil {
 		slog.Debug("error during marshalling", slog.Any("error", err))
 	}
-	_, err = f.WriteString(string(newJSON))
+	err = os.WriteFile(filename, newJSON, 0666)
 	if err != nil {
 		slog.Debug("error during writing string", slog.Any("error", err))
 	}
@@ -87,11 +88,21 @@ func addNewUser() (accounts.Account, error) {
 	// Type necessary account information
 	reader := bufio.NewReader(os.Stdin)
 
+	fmt.Println("Please add short alias for this account")
+	mailAlias, err := reader.ReadString('\n')
+	mailAlias = strings.TrimSuffix(mailAlias, "\n")
+	if err != nil {
+		return accounts.Account{}, err
+	}
+
 	fmt.Println("Please add mail type. Available types are: gmail, ...")
 	mailType, err := reader.ReadString('\n')
 	mailType = strings.TrimSuffix(mailType, "\n")
 	if err != nil {
 		return accounts.Account{}, err
+	}
+	if mailType != "gmail" {
+		return accounts.Account{}, errors.New("mail type should be only gmail")
 	}
 
 	fmt.Println("Please add email address")
@@ -109,12 +120,13 @@ func addNewUser() (accounts.Account, error) {
 	}
 	fmt.Println("Please add oauth2 clientSecret")
 	clientSecret, err := reader.ReadString('\n')
-	clientId = strings.Trim(clientId, "\n")
+	clientSecret = strings.Trim(clientSecret, "\n")
 	if err != nil {
 		return accounts.Account{}, err
 	}
 
 	return accounts.Account{
+		Short:        mailAlias,
 		MailType:     mailType,
 		Email:        email,
 		ClientID:     clientId,

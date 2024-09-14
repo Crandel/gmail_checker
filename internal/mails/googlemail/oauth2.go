@@ -17,19 +17,20 @@ const (
 
 // Retrieve a token, saves the token, then returns the generated client.
 func GetClient(ctx context.Context, config *oauth2.Config) (*http.Client, error) {
-	// The file token.json stores the user's access and refresh tokens, and is
-	// created automatically when the authorization flow completes for the first
-	// time.
-	gmailUser, err := tokenFromKeyring(config)
+	token, err := tokenFromKeyring(ctx, config)
 	if err != nil {
 		return nil, err
 	}
-	return config.Client(ctx, gmailUser), err
+	return config.Client(ctx, token), err
 }
 
 // Request a token from the web, then returns the retrieved token.
-func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
-	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+func getTokenFromWeb(ctx context.Context, config *oauth2.Config) *oauth2.Token {
+	authURL, err := config.DeviceAuth(ctx, oauth2.AccessTypeOffline)
+	if err != nil {
+		slog.Debug("unable to create auth link", slog.Any("error", err))
+		return nil
+	}
 	fmt.Printf("Go to the following link in your browser then type the authorization code: \n%v\n", authURL)
 
 	var authCode string
@@ -45,13 +46,13 @@ func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 }
 
 // Retrieves a token from a local file.
-func tokenFromKeyring(config *oauth2.Config) (*oauth2.Token, error) {
+func tokenFromKeyring(ctx context.Context, config *oauth2.Config) (*oauth2.Token, error) {
 	key := tokKey + config.ClientID
 	token := &oauth2.Token{}
 	userString, err := keyring.GetEntry(key)
 	if err != nil {
 		slog.Debug("can't get token from keyring", slog.Any("error", err))
-		tok := getTokenFromWeb(config)
+		tok := getTokenFromWeb(ctx, config)
 
 		err = saveToken(key, tok)
 		if err != nil {
