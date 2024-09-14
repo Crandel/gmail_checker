@@ -19,6 +19,7 @@ import (
 const gmailUrl = "https://mail.google.com"
 
 func main() {
+	ctx := context.Background()
 	debug := os.Getenv("DEBUG")
 	logLevel := slog.LevelInfo
 	showSources := false
@@ -28,15 +29,9 @@ func main() {
 	}
 
 	logging.InitLogger(logLevel, showSources)
-	createFlag := flag.Bool("config", false, "Update configuration with new mail client")
 	addUserFlag := flag.Bool("add", false, "Add new user to specific mail client")
 
 	flag.Parse()
-
-	if *createFlag {
-		config.AddToConfig()
-		return
-	}
 
 	if *addUserFlag {
 		config.AddToConfig()
@@ -44,7 +39,6 @@ func main() {
 
 	// Check if domain online
 	resp, err := http.Get(gmailUrl)
-	ctx := context.Background()
 
 	if err == nil || resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusMovedPermanently {
 		channel := make(chan string)
@@ -55,7 +49,7 @@ func main() {
 				config := googlemail.GetConfig(acc.ClientID, acc.ClientSecret)
 				// separate all network requests to goroutines
 
-				client, err := googlemail.GetClient(config)
+				client, err := googlemail.GetClient(ctx, config)
 				if err != nil {
 					slog.Debug("can't load client for client id: "+acc.ClientID, slog.Any("error", err))
 					continue
@@ -88,4 +82,5 @@ func main() {
 		// }
 		// fmt.Println(strings.Join(counts, ""))
 	}
+	slog.Debug("finish")
 }
