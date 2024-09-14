@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"flag"
 	"fmt"
@@ -9,7 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"strings"
 
 	libGmail "google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
@@ -51,7 +49,7 @@ func main() {
 	}
 
 	if *addUserFlag {
-		addNewUser()
+		config.AddToConfig()
 	}
 
 	// Check if domain online
@@ -102,40 +100,5 @@ func main() {
 		// 	counts[i] = <-channel
 		// }
 		// fmt.Println(strings.Join(counts, ""))
-	}
-}
-
-func addNewUser() {
-	// Type necessary information
-	reader := bufio.NewReader(os.Stdin)
-
-	fmt.Println("Please add client id responsible to fetch information for this user")
-	clientID, err := reader.ReadString('\n')
-	clientID = strings.Trim(clientID, "\n")
-	if err != nil {
-		fmt.Println("An error occured while reading input. Please try again", err)
-		return
-	}
-	acc := config.GetAccount(clientID)
-	if acc == nil {
-		fmt.Println("There are no account with this client id. Please try another client id")
-		return
-	}
-	config, err := googlemail.GetConfig(clientID)
-	if err != nil {
-		fmt.Println("can't get config for this client id. Please try another client id")
-		return
-	}
-
-	fmt.Println("Please add user alias")
-	alias, err := reader.ReadString('\n')
-	alias = strings.Trim(alias, "\n")
-	if err != nil {
-		fmt.Println("An error occured while reading input. Please try again", err)
-		return
-	}
-	err = googlemail.SaveToken(config, alias)
-	if err != nil {
-		fmt.Println("error saving token to keyring", err)
 	}
 }

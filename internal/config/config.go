@@ -12,10 +12,10 @@ import (
 	"github.com/Crandel/gmail/internal/accounts"
 )
 
-const fileName = "accounts.json"
-const dir = ".cache/gmail"
+const fileName = "config.json"
+const dir = "mail"
 
-var configDir = fmt.Sprintf("%s/%s", os.Getenv("HOME"), dir)
+var configDir = fmt.Sprintf("%s/%s", os.Getenv("XDG_CONFIG_HOME"), dir)
 var filename = fmt.Sprintf("%s/%s", configDir, fileName)
 
 func GetAccounts() accounts.ListAccounts {
@@ -66,40 +66,11 @@ func AddToConfig() {
 		}
 	}
 	defer f.Close()
-
-	// Type necessary account information
-	reader := bufio.NewReader(os.Stdin)
-
-	fmt.Println("Please add mail type. Available types are: gmail, ...")
-	mailType, err := reader.ReadString('\n')
-	mailType = strings.TrimSuffix(mailType, "\n")
+	newAccount, err := addNewUser()
 	if err != nil {
 		fmt.Println("An error occured while reading input. Please try again", err)
 		return
 	}
-
-	fmt.Println("Please add email address")
-	email, err := reader.ReadString('\n')
-	email = strings.Trim(email, "\n")
-	if err != nil {
-		fmt.Println("An error occured while reading input. Please try again", err)
-		return
-	}
-
-	fmt.Println("Please add oauth2 clientId")
-	clientId, err := reader.ReadString('\n')
-	clientId = strings.Trim(clientId, "\n")
-	if err != nil {
-		fmt.Println("An error occured while reading input. Please try again", err)
-		return
-	}
-
-	newAccount := accounts.Account{
-		MailType: mailType,
-		Email:    email,
-		ClientID: clientId,
-	}
-
 	listAccounts = append(listAccounts, newAccount)
 	var newJSON []byte
 	newJSON, err = json.Marshal(listAccounts)
@@ -110,4 +81,43 @@ func AddToConfig() {
 	if err != nil {
 		slog.Debug("error during writing string", slog.Any("error", err))
 	}
+}
+
+func addNewUser() (accounts.Account, error) {
+	// Type necessary account information
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Println("Please add mail type. Available types are: gmail, ...")
+	mailType, err := reader.ReadString('\n')
+	mailType = strings.TrimSuffix(mailType, "\n")
+	if err != nil {
+		return accounts.Account{}, err
+	}
+
+	fmt.Println("Please add email address")
+	email, err := reader.ReadString('\n')
+	email = strings.Trim(email, "\n")
+	if err != nil {
+		return accounts.Account{}, err
+	}
+
+	fmt.Println("Please add oauth2 clientId")
+	clientId, err := reader.ReadString('\n')
+	clientId = strings.Trim(clientId, "\n")
+	if err != nil {
+		return accounts.Account{}, err
+	}
+	fmt.Println("Please add oauth2 clientSecret")
+	clientSecret, err := reader.ReadString('\n')
+	clientId = strings.Trim(clientId, "\n")
+	if err != nil {
+		return accounts.Account{}, err
+	}
+
+	return accounts.Account{
+		MailType:     mailType,
+		Email:        email,
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
+	}, nil
 }
