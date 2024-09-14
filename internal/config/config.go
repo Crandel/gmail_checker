@@ -15,8 +15,8 @@ import (
 const fileName = "config.json"
 const dir = "mail"
 
-var configDir = fmt.Sprintf("%s/%s", os.Getenv("XDG_CONFIG_HOME"), dir)
-var filename = fmt.Sprintf("%s/%s", configDir, fileName)
+var ConfigDir = fmt.Sprintf("%s/%s", os.Getenv("XDG_CONFIG_HOME"), dir)
+var filename = fmt.Sprintf("%s/%s", ConfigDir, fileName)
 
 func GetAccounts() accounts.ListAccounts {
 	content, err := os.ReadFile(filename)
@@ -44,8 +44,8 @@ func GetAccount(clientID string) *accounts.Account {
 
 func AddToConfig() {
 	listAccounts := accounts.ListAccounts{}
-	if _, err := os.Stat(configDir); errors.Is(err, os.ErrNotExist) {
-		err := os.Mkdir(configDir, os.ModePerm)
+	if _, err := os.Stat(ConfigDir); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir(ConfigDir, os.ModePerm)
 		if err != nil {
 			slog.Debug("Create config directory", slog.Any("error", err))
 		}

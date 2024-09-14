@@ -47,9 +47,12 @@ func main() {
 		listAccounts := config.GetAccounts()
 		for _, acc := range listAccounts {
 			if acc.MailType == googlemail.Type {
-				config := googlemail.GetConfig(acc.ClientID, acc.ClientSecret)
+				config, err := googlemail.GetConfig(acc.ClientID, acc.ClientSecret)
+				if err != nil {
+					slog.Debug("can't load config from credentials", slog.Any("error", err))
+					continue
+				}
 				// separate all network requests to goroutines
-
 				client, err := googlemail.GetClient(ctx, config)
 				if err != nil {
 					slog.Debug("can't load client for client id: "+acc.ClientID, slog.Any("error", err))
@@ -72,7 +75,7 @@ func main() {
 				}
 				fmt.Println("Labels:")
 				for _, l := range r.Labels {
-					fmt.Printf("- %s\n", l.Name)
+					fmt.Printf("%s: %d\n", l.Name, l.MessagesUnread)
 				}
 			}
 		}
