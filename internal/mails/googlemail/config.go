@@ -11,11 +11,8 @@ import (
 	libGmail "google.golang.org/api/gmail/v1"
 )
 
-const credentialsName = "credentials.json"
-
-var credentialsFile = fmt.Sprintf("%s/%s", config.ConfigDir, credentialsName)
-
-func GetConfig(clientID, clientSecret string) (*oauth2.Config, error) {
+func GetConfig(clientID string) (*oauth2.Config, error) {
+	credentialsFile := fmt.Sprintf("%s/%s.json", config.ConfigDir, clientID)
 
 	b, err := os.ReadFile(credentialsFile)
 	if err != nil {
