@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"slices"
 
 	libGmail "google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
@@ -16,7 +17,17 @@ import (
 	"github.com/Crandel/gmail/internal/mails/googlemail"
 )
 
-const gmailUrl = "https://mail.google.com"
+const (
+	gmailUrl = "https://mail.google.com"
+)
+
+var requiredLabels = []string{
+	"INBOX",
+	"TRASH",
+	"SPAM",
+	"Github",
+	"Delivery",
+}
 
 func main() {
 	ctx := context.Background()
@@ -76,8 +87,19 @@ func main() {
 				}
 				fmt.Println("Labels:")
 				for _, l := range r.Labels {
-					fmt.Printf("%s: %d - %d\n", l.Name, l.MessagesUnread, l.MessagesTotal)
+					if slices.Contains(requiredLabels, l.Name) {
+						ll, err := srv.Users.Labels.Get(user, l.Id).Do()
+						if err != nil {
+							slog.Debug("label get ", slog.Any("error", err))
+						} else {
+							fmt.Printf("%s: %d\n", ll.Name, ll.MessagesUnread)
+						}
+					}
 				}
+				// ms, err := srv.Users.Messages.List(user).Do()
+				// for _, m := range ms.Messages {
+				// 	fmt.Printf("\nmessage id %s\n", m.Id)
+				// }
 			}
 		}
 		// accLen := len(listAccounts)
