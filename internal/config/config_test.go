@@ -83,7 +83,7 @@ type MockReader struct {
 }
 
 func (mr MockReader) Read(p []byte) (n int, err error) {
-	p = []byte(mr.input)
+	copy(p, []byte(mr.input))
 	return len(mr.input), nil
 }
 
