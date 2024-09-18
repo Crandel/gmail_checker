@@ -36,7 +36,17 @@ func main() {
 
 	channel := make(chan string)
 	defer close(channel)
-	listAccounts := config.GetAccounts()
+	filename := config.GetFilename()
+	file, err := os.Open(filename)
+	if err != nil {
+		slog.Error("Can't open file " + filename)
+		return
+	}
+	listAccounts, err := config.GetAccounts(file)
+	if err != nil {
+		slog.Error("unable to retrieve account list")
+		return
+	}
 	for _, acc := range listAccounts {
 		if acc.MailType == accounts.Gmail {
 			if googlemail.CheckOnline() {
