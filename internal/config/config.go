@@ -18,6 +18,7 @@ const dir = "mail"
 
 var ConfigDir = fmt.Sprintf("%s/%s", os.Getenv("XDG_CONFIG_HOME"), dir)
 var filename = fmt.Sprintf("%s/%s", ConfigDir, fileName)
+var ErrMailType = errors.New("mail type should be only gmail")
 
 type inputReader interface {
 	ReadString(delim byte) (string, error)
@@ -105,7 +106,7 @@ func addNewUser(reader inputReader) (accounts.Account, error) {
 	}
 	mailT := accounts.MailType(mailType)
 	if mailT != accounts.Gmail {
-		return accounts.Account{}, errors.New("mail type should be only gmail")
+		return accounts.Account{}, ErrMailType
 	}
 
 	fmt.Println("Please add email address")

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"io"
 	"reflect"
 	"testing"
@@ -8,74 +9,60 @@ import (
 	"github.com/Crandel/gmail/internal/accounts"
 )
 
-//	func Test_addNewUser(t *testing.T) {
-//		type args struct {
-//			reader *bufio.Reader
-//		}
-//		tests := []struct {
-//			name    string
-//			args    args
-//			want    accounts.Account
-//			wantErr bool
-//		}{
-//			// TODO: Add test cases.
-//		}
-//		for _, tt := range tests {
-//			t.Run(tt.name, func(t *testing.T) {
-//				got, err := addNewUser(tt.args.reader)
-//				if (err != nil) != tt.wantErr {
-//					t.Errorf("addNewUser() error = %v, wantErr %v", err, tt.wantErr)
-//					return
-//				}
-//				if !reflect.DeepEqual(got, tt.want) {
-//					t.Errorf("addNewUser() = %v, want %v", got, tt.want)
-//				}
-//			})
-//		}
-//	}
-//
+// MockBufioReader is a struct that implements the bufio.Reader interface for testing.
+type MockBufioReader struct {
+	input []string
+}
 
-// // MockReader is a struct that implements the bufio.Reader interface for testing.
-// type MockReader struct {
-// 	input []string
-// }
+func (mr *MockBufioReader) ReadString(delim byte) (string, error) {
+	if len(mr.input) > 0 {
+		s := mr.input[0]
+		mr.input = mr.input[1:]
+		return s + string(delim), nil
+	}
+	return "", errors.New("no more input")
+}
 
-// func (mr *MockReader) ReadString(delim byte) (string, error) {
-// 	if len(mr.input) > 0 {
-// 		s := mr.input[0]
-// 		mr.input = mr.input[1:]
-// 		return s + "\n", nil
-// 	}
-// 	return "", errors.New("no more input")
-// }
+func TestAddNewUser(t *testing.T) {
+	type testAccount struct {
+		Short    string
+		Type     string
+		Email    string
+		ClientID string
+	}
 
-// func TestAddNewUser(t *testing.T) {
-// 	// Define your test data: alias, type, email and clientId in that order.
-// 	testData := []struct {
-// 		alias    string
-// 		mailType string
-// 		email    string
-// 		clientID string
-// 	}{
-// 		{"alias1", "gmail", "example@email.com", "clientId1"},
-// 		{"alias2", "notGmail", "anotherExample@email.com", "clientId2"},
-// 	}
+	// Define your test data: alias, type, email and clientId in that order.
+	testData := []struct {
+		testAccount
+		error
+	}{
+		{
+			testAccount{"alias1", "gmail", "example@email.com", "clientId1"},
+			nil,
+		},
+		{
+			testAccount{"alias2", "notGmail", "anotherExample@email.com", "clientId2"},
+			ErrMailType,
+		},
+	}
 
-// 	for _, td := range testData {
-// 		// Create a mock reader that returns the test data when ReadString is called.
-// 		mockReader := &MockReader{input: []string{td.alias, td.mailType, td.email, td.clientID}}
-
-// 		account, err := addNewUser(mockReader)
-// 		if err != nil {
-// 			t.Errorf("addNewUser returned error %q when it should not have", err)
-// 		}
-
-// 		// Assert that the account has the correct values.
-// 		if account.Short != td.alias || account.Email != td.email || account.ClientID != td.clientID {
-// 			t.Errorf("addNewUser returned incorrect account: got %+v, want Short=%s, Email=%s, ClientId =%s", account, td.alias, td.email, td.clientID)
-// 		}
-// 	}
-// }
+	for _, td := range testData {
+		// Create a mock reader that returns the test data when ReadString is called.
+		mockReader := &MockBufioReader{input: []string{td.testAccount.Short, td.testAccount.Type, td.testAccount.Email, td.testAccount.ClientID}}
+		account, err := addNewUser(mockReader)
+		if td.error != nil {
+			if err.Error() != td.error.Error() {
+				t.Errorf("addNewUser returned different error: got '%+v', want '%+v'", err, td.error)
+			}
+			continue
+		}
+		if reflect.DeepEqual(account, td.testAccount) {
+			t.Errorf("addNewUser returned incorrect account: got %+v, want Short=%s, Type=%s, Email=%s, ClientId =%s",
+				account,
+				td.testAccount.Short, td.testAccount.Type, td.testAccount.Email, td.testAccount.ClientID)
+		}
+	}
+}
 
 // MockReader is a struct that implements the io.Reader interface for testing.
 type MockReader struct {
