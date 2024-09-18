@@ -95,7 +95,7 @@ func TestGetAccounts(t *testing.T) {
 		err      error
 	}
 
-	var jsonStr = []byte(`[{"Short":"alias1", "MailType":"gmail", "Email":"email@example.com", "ClientID":"clientId1"}, {"Short":"alias2", "MailType":"gmail", "Email":"another@example.com", "ClientID":"clientId2"}]`)
+	var jsonStr = []byte(`[{"short":"alias1", "mail_type":"gmail", "email":"email@example.com", "client_id":"clientId1"}, {"short":"alias2", "mail_type":"gmail", "email":"another@example.com", "client_id":"clientId2"}]`)
 	var accountsList = []accounts.Account{
 		{
 			Short:    "alias1",
