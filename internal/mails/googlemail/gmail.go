@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	url = "https://mail.google.com"
+	url     = "https://mail.google.com"
+	service = "gmail_checker"
 )
 
 var requiredLabels = []string{

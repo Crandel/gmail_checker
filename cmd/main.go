@@ -36,10 +36,9 @@ func main() {
 
 	channel := make(chan string)
 	defer close(channel)
-	filename := config.GetFilename()
-	file, err := os.Open(filename)
+	file, err := config.GetFile()
 	if err != nil {
-		slog.Error("Can't open file " + filename)
+		slog.Error("error during get file", slog.Any("error", err))
 		return
 	}
 	listAccounts, err := config.GetAccounts(file)
