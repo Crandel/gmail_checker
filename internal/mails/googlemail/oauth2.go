@@ -52,6 +52,19 @@ func GetClient(ctx context.Context, config *oauth2.Config, systemKeyring bool) (
 		}
 	}
 
+	if !token.Valid() {
+		newToken, err := config.TokenSource(ctx, token).Token()
+		if err != nil {
+			slog.Debug("can't refresh token from web", slog.Any("error", err))
+			return nil, err
+		}
+		err = saveToken(key, newToken, keyringH)
+		if err != nil {
+			slog.Debug("can't save refreshed token to keyring", slog.Any("error", err))
+			return nil, err
+		}
+		token = newToken
+	}
 	return config.Client(ctx, token), nil
 }
 
