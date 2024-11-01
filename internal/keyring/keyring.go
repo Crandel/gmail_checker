@@ -3,7 +3,7 @@ package keyring
 import (
 	"log/slog"
 
-	"github.com/zalando/go-keyring"
+	k "github.com/zalando/go-keyring"
 )
 
 type KeyringHandler interface {
@@ -22,7 +22,7 @@ func NewKeyring(name string) KeyringHandler {
 
 func (kh keyringHandler) GetEntry(key string) (string, error) {
 	// get password
-	secret, err := keyring.Get(kh.name, key)
+	secret, err := k.Get(kh.name, key)
 	if err != nil {
 		slog.Debug("can't get credentials from keyring", slog.Any("error", err))
 		return "", err
@@ -31,7 +31,7 @@ func (kh keyringHandler) GetEntry(key string) (string, error) {
 }
 
 func (kh keyringHandler) SetEntry(key string, data string) error {
-	err := keyring.Set(kh.name, key, data)
+	err := k.Set(kh.name, key, data)
 	if err != nil {
 		slog.Debug("can't save credentials to keyring", slog.Any("error", err))
 		return err
