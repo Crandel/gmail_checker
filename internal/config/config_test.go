@@ -82,7 +82,7 @@ func TestGetAccounts(t *testing.T) {
 		err      error
 	}
 
-	var jsonStr = []byte(`[{"short":"alias1", "mail_type":"gmail", "email":"email@example.com", "client_id":"clientId1"}, {"short":"alias2", "mail_type":"gmail", "email":"another@example.com", "client_id":"clientId2"}]`)
+	var jsonStr = `[{"short":"alias1", "mail_type":"gmail", "email":"email@example.com", "client_id":"clientId1"}, {"short":"alias2", "mail_type":"gmail", "email":"another@example.com", "client_id":"clientId2"}]`
 	var accountsList = []accounts.Account{
 		{
 			Short:    "alias1",
@@ -100,7 +100,7 @@ func TestGetAccounts(t *testing.T) {
 
 	tests := []testCase{{
 		name:     "GetAccounts test",
-		input:    MockReader{string(jsonStr)},
+		input:    MockReader{jsonStr},
 		expected: accountsList,
 	}}
 

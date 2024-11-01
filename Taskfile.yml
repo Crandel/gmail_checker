@@ -29,7 +29,7 @@ tasks:
     cmds:
       - cmd: echo "Testing project"
         silent: true
-      - cmd: go test -p 1 -count=1 -cover -coverprofile=unit.coverage.out ./...
+      - cmd: gotest -p 1 -count=1 -cover -coverprofile=unit.coverage.out ./...
 
   # start project
   start:

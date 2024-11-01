@@ -5,14 +5,18 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/Crandel/gmail/internal/config"
+	"github.com/Crandel/gmail/internal/file"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	libGmail "google.golang.org/api/gmail/v1"
 )
 
 func GetConfig(clientID string) (*oauth2.Config, error) {
-	credentialsFile := fmt.Sprintf("%s/%s.json", config.ConfigDir, clientID)
+	cacheDir, err := file.GetCacheDir()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get cache dir: %v", err)
+	}
+	credentialsFile := fmt.Sprintf("%s/%s.json", cacheDir, clientID)
 
 	b, err := os.ReadFile(credentialsFile)
 	if err != nil {

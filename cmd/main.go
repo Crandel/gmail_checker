@@ -33,13 +33,14 @@ func main() {
 		config.AddToConfig()
 		return
 	}
+	systemKeyringFlag := flag.Bool("system_keyring", false, "Use system keyring instead of file")
+	flag.Parse()
 
 	channel := make(chan string)
 	defer close(channel)
-	filename := config.GetFilename()
-	file, err := os.Open(filename)
+	file, err := config.GetFile()
 	if err != nil {
-		slog.Error("Can't open file " + filename)
+		slog.Error("error during get file", slog.Any("error", err))
 		return
 	}
 	listAccounts, err := config.GetAccounts(file)
@@ -50,7 +51,7 @@ func main() {
 	for _, acc := range listAccounts {
 		if acc.MailType == accounts.Gmail {
 			if googlemail.CheckOnline() {
-				go googlemail.GetGMailCount(ctx, channel, acc)
+				go googlemail.GetGMailCount(ctx, channel, acc, *systemKeyringFlag)
 			}
 		}
 

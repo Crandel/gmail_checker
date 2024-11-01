@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	url = "https://mail.google.com"
+	url     = "https://mail.google.com"
+	service = "gmail_checker"
 )
 
 var requiredLabels = []string{
@@ -33,14 +34,14 @@ func CheckOnline() bool {
 }
 
 // GetMailCount - new goroutine for checking emails
-func GetGMailCount(ctx context.Context, channel chan<- string, acc accounts.Account) {
+func GetGMailCount(ctx context.Context, channel chan<- string, acc accounts.Account, systemKeyring bool) {
 	config, err := GetConfig(acc.ClientID)
 	if err != nil {
 		slog.Debug("can't load config from credentials", slog.Any("error", err))
 		return
 	}
 	// separate all network requests to goroutines
-	client, err := GetClient(ctx, config)
+	client, err := GetClient(ctx, config, systemKeyring)
 	if err != nil {
 		slog.Debug("can't load client for client id: "+acc.ClientID, slog.Any("error", err))
 		return

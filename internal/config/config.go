@@ -11,62 +11,68 @@ import (
 	"strings"
 
 	"github.com/Crandel/gmail/internal/accounts"
+	"github.com/Crandel/gmail/internal/file"
 )
 
-const fileName = "config.json"
-const dir = "mail"
+const (
+	dir      = "mail"
+	fileName = "config.json"
+)
 
-var ConfigDir = fmt.Sprintf("%s/%s", os.Getenv("XDG_CONFIG_HOME"), dir)
-var filename = fmt.Sprintf("%s/%s", ConfigDir, fileName)
+var configDir = fmt.Sprintf("%s/%s", os.Getenv("XDG_CONFIG_HOME"), dir)
+var filename = fmt.Sprintf("%s/%s", configDir, fileName)
 var ErrMailType = errors.New("mail type should be only gmail")
 
 type inputReader interface {
 	ReadString(delim byte) (string, error)
 }
 
-func GetFilename() string {
-	return filename
+func GetFile() (io.Reader, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
 }
 
 func GetAccounts(reader io.Reader) (accounts.ListAccounts, error) {
 	listAccounts := accounts.ListAccounts{}
 	err := json.NewDecoder(reader).Decode(&listAccounts)
-	if err == nil {
+	if err != nil {
 		slog.Debug("error during Unmarshal", slog.Any("error", err))
 		return listAccounts, err
 	}
 	return listAccounts, err
 }
 
-func AddToConfig() error {
-	listAccounts := accounts.ListAccounts{}
-	if _, err := os.Stat(ConfigDir); errors.Is(err, os.ErrNotExist) {
-		err := os.Mkdir(ConfigDir, os.ModePerm)
-		if err != nil {
-			slog.Error("Create config directory", slog.Any("error", err))
-			return err
-		}
-	}
-
-	// if file with configuration doesn`t exists this part will create it
+func readExistingConfig(filename string) (accs accounts.ListAccounts, err error) {
 	origFile, err := os.Open(filename)
-	if errors.Is(err, os.ErrNotExist) {
-		origFile, err = os.Create(filename)
-		if err != nil {
-			slog.Error("error during creation file", slog.String("filename", filename))
-			return err
-		}
+	if err != nil {
+		slog.Error("error during opening file", slog.Any("error", err))
+		return nil, err
 	}
-	// If file already exists, read it's content
-	listAccounts, err = GetAccounts(origFile)
+	defer origFile.Close()
+	accs, err = GetAccounts(origFile)
 	if err != nil {
 		slog.Error("error during Unmarshal", slog.Any("error", err))
+		return nil, err
+	}
+
+	return accs, nil
+}
+
+func AddToConfig() error {
+	err := file.CreateDirectory(configDir)
+	if err != nil {
 		return err
 	}
 
-	origFile.Close()
 	reader := bufio.NewReader(os.Stdin)
-
+	listAccounts, err := readExistingConfig(filename)
+	if err != nil {
+		return err
+	}
 	newAccount, err := addNewUser(reader)
 	if err != nil {
 		slog.Error("An error occured while reading input. Please try again", slog.Any("error", err))
@@ -74,8 +80,9 @@ func AddToConfig() error {
 	}
 	listAccounts = append(listAccounts, newAccount)
 	slog.Debug("Accounts list", slog.Any("list", listAccounts))
+
 	var newJSON []byte
-	newJSON, err = json.Marshal(listAccounts)
+	newJSON, err = json.MarshalIndent(listAccounts, "", "  ")
 	if err != nil {
 		slog.Error("error during marshalling", slog.Any("error", err))
 		return err
@@ -85,22 +92,21 @@ func AddToConfig() error {
 		slog.Error("error during writing string", slog.Any("error", err))
 		return err
 	}
+
 	return err
 }
 
 func addNewUser(reader inputReader) (accounts.Account, error) {
-	// Type necessary account information
-
 	fmt.Println("Please add short alias for this account")
 	mailAlias, err := reader.ReadString('\n')
-	mailAlias = strings.TrimSuffix(mailAlias, "\n")
+	mailAlias = strings.TrimSpace(mailAlias)
 	if err != nil {
 		return accounts.Account{}, err
 	}
 
-	fmt.Println("Please add mail type. Available types are: gmail, ...")
+	fmt.Println("Please add mail type. Available types are: gmail")
 	mailType, err := reader.ReadString('\n')
-	mailType = strings.TrimSuffix(mailType, "\n")
+	mailType = strings.TrimSpace(mailType)
 	if err != nil {
 		return accounts.Account{}, err
 	}
@@ -111,14 +117,14 @@ func addNewUser(reader inputReader) (accounts.Account, error) {
 
 	fmt.Println("Please add email address")
 	email, err := reader.ReadString('\n')
-	email = strings.Trim(email, "\n")
+	email = strings.TrimSpace(email)
 	if err != nil {
 		return accounts.Account{}, err
 	}
 
 	fmt.Println("Please add oauth2 clientId")
 	clientId, err := reader.ReadString('\n')
-	clientId = strings.Trim(clientId, "\n")
+	clientId = strings.TrimSpace(clientId)
 	if err != nil {
 		return accounts.Account{}, err
 	}
