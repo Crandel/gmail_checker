@@ -32,25 +32,26 @@ func GetClient(ctx context.Context, config *oauth2.Config, systemKeyring bool) (
 		if err != nil {
 			return nil, err
 		}
-		keyringH = keyring.NewFileKeyring(keyringDir, tokKey)
+		keyringH, err = keyring.NewFileKeyring(keyringDir, tokKey)
+		if err != nil {
+			return nil, err
+		}
 	}
 	key := tokKey + config.ClientID
 	token, err := tokenFromKeyring(key, keyringH)
-	if err != nil && token == nil {
-		slog.Debug("can't get token from keyring", slog.Any("error", err), slog.Bool("token is valid", token.Valid()))
-		return nil, err
-	}
-	tok, err := getTokenFromWeb(ctx, config)
-
-	if err != nil && tok == nil {
-		slog.Debug("can't get token from web", slog.Any("error", err), slog.Any("token", tok))
-		return nil, err
-	}
-	err = saveToken(key, tok, keyringH)
 	if err != nil {
-		slog.Debug("can't save token to keyring", slog.Any("error", err))
-		return nil, err
+		token, err = getTokenFromWeb(ctx, config)
+		if err != nil || token == nil {
+			slog.Debug("can't get token from web", slog.Any("error", err), slog.Any("token", token))
+			return nil, err
+		}
+		err = saveToken(key, token, keyringH)
+		if err != nil {
+			slog.Debug("can't save token to keyring", slog.Any("error", err))
+			return nil, err
+		}
 	}
+
 	return config.Client(ctx, token), nil
 }
 

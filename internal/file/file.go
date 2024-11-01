@@ -19,7 +19,7 @@ func GetCacheDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return cacheDir, nil
+	return mailCacheDir, nil
 }
 
 func CreateDirectory(directory string) error {
