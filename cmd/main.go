@@ -33,6 +33,8 @@ func main() {
 		config.AddToConfig()
 		return
 	}
+	systemKeyringFlag := flag.Bool("system_keyring", false, "Use system keyring instead of file")
+	flag.Parse()
 
 	channel := make(chan string)
 	defer close(channel)
@@ -49,7 +51,7 @@ func main() {
 	for _, acc := range listAccounts {
 		if acc.MailType == accounts.Gmail {
 			if googlemail.CheckOnline() {
-				go googlemail.GetGMailCount(ctx, channel, acc)
+				go googlemail.GetGMailCount(ctx, channel, acc, *systemKeyringFlag)
 			}
 		}
 

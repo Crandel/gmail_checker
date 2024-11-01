@@ -23,12 +23,17 @@ type keyringHandler interface {
 }
 
 // Retrieve a token, saves the token, then returns the generated client.
-func GetClient(ctx context.Context, config *oauth2.Config) (*http.Client, error) {
-	keyringDir, err := file.GetCacheDir()
-	if err != nil {
-		return nil, err
+func GetClient(ctx context.Context, config *oauth2.Config, systemKeyring bool) (*http.Client, error) {
+	var keyringH keyringHandler
+	if systemKeyring {
+		keyringH = keyring.NewKeyring(tokKey)
+	} else {
+		keyringDir, err := file.GetCacheDir()
+		if err != nil {
+			return nil, err
+		}
+		keyringH = keyring.NewFileKeyring(keyringDir, tokKey)
 	}
-	keyringH := keyring.NewFileKeyring(keyringDir, tokKey)
 	key := tokKey + config.ClientID
 	token, err := tokenFromKeyring(key, keyringH)
 	if err != nil && token == nil {
