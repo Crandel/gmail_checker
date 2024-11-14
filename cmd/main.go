@@ -5,18 +5,18 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
-	"os"
 	"strings"
 
 	"github.com/Crandel/gmail/internal/accounts"
 	"github.com/Crandel/gmail/internal/config"
+	"github.com/Crandel/gmail/internal/env"
 	"github.com/Crandel/gmail/internal/logging"
 	"github.com/Crandel/gmail/internal/mails/googlemail"
 )
 
 func main() {
 	ctx := context.Background()
-	debug := os.Getenv("DEBUG")
+	debug := env.GetEnv("DEBUG", "false")
 	logLevel := slog.LevelInfo
 	showSources := false
 	if debug == "1" {
@@ -29,8 +29,10 @@ func main() {
 
 	flag.Parse()
 
+	var err error
 	if *addUserFlag {
-		config.AddToConfig()
+		err = config.AddToConfig()
+		slog.Error("failed to add user to config", slog.Any("error", err))
 		return
 	}
 	systemKeyringFlag := flag.Bool("system_keyring", false, "Use system keyring instead of file")
@@ -54,7 +56,6 @@ func main() {
 				go googlemail.GetGMailCount(ctx, channel, acc, *systemKeyringFlag)
 			}
 		}
-
 	}
 
 	accLen := len(listAccounts)

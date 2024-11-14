@@ -71,7 +71,7 @@ linters-settings:
     # List of functions to exclude from checking, where each entry is a single function to exclude.
     # See https://github.com/kisielk/errcheck#excluding-functions for details.
     exclude-functions:
-      - fmt:.*
+      - fmt:*
       - io/ioutil:^Read.*
 
     # path to a file containing a list of functions to exclude from checking

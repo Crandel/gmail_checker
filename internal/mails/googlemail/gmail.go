@@ -6,9 +6,10 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/Crandel/gmail/internal/accounts"
 	libGmail "google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
+
+	"github.com/Crandel/gmail/internal/accounts"
 )
 
 const (
@@ -16,14 +17,15 @@ const (
 	service = "gmail_checker"
 )
 
-var requiredLabels = []string{
-	"INBOX",
-	"TRASH",
-	"SPAM",
-	"Github",
-	"Delivery",
-}
+// var requiredLabels = []string{
+// 	"INBOX",
+// 	"TRASH",
+// 	"SPAM",
+// 	"Github",
+// 	"Delivery",
+// }
 
+// CheckOnline will check google servers availability.
 func CheckOnline() bool {
 	// Check if domain online
 	resp, err := http.Get(url)

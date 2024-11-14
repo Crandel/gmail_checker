@@ -8,9 +8,10 @@ import (
 	"log/slog"
 	"net/http"
 
+	"golang.org/x/oauth2"
+
 	"github.com/Crandel/gmail/internal/file"
 	"github.com/Crandel/gmail/internal/keyring"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -79,6 +80,7 @@ func getTokenFromWeb(ctx context.Context, config *oauth2.Config) (*oauth2.Token,
 	tok, err := config.Exchange(ctx, authCode)
 	if err != nil {
 		slog.Debug("Unable to retrieve token from web", slog.Any("error", err))
+		return &oauth2.Token{}, err
 	}
 	return tok, nil
 }
@@ -103,7 +105,7 @@ func saveToken(key string, token *oauth2.Token, keyring keyringHandler) error {
 	slog.Debug("Saving credentials  to keyring with expiry date: " + token.Expiry.String())
 	tokenByte, err := json.Marshal(token)
 	if err != nil {
-		slog.Debug("Error during marshalling token", slog.Any("error", err))
+		slog.Debug("Error during marshaling token", slog.Any("error", err))
 		return err
 	}
 	return keyring.SetEntry(key, string(tokenByte))
@@ -118,7 +120,7 @@ func startServer() chan string {
 		codeChan <- code
 		fmt.Fprintf(w, "Authorization successful! You can close this window now.")
 		go func() {
-			server.Shutdown(context.Background())
+			_ = server.Shutdown(context.Background())
 		}()
 	})
 

@@ -2,6 +2,7 @@ package keyring
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -18,13 +19,21 @@ type fileKeyring struct {
 	file string
 }
 
-func NewFileKeyring(dir, name string) (KeyringHandler, error) {
+// NewFileKeyring return fileKeyring with corresponding file.
+func NewFileKeyring(dir, name string) (Handler, error) {
 	filename := fmt.Sprintf("%s/%s_%s", dir, name, fileName)
 	f, err := os.Open(filename)
 	if err != nil {
 		f, err = os.Create(filename)
+		if err != nil {
+			return nil, err
+		}
 	}
-	f.Close()
+	err = f.Close()
+	if err != nil {
+		return nil, err
+	}
+
 	return fileKeyring{
 		file: filename,
 	}, nil
@@ -37,10 +46,15 @@ func (fk fileKeyring) getMap() (content, error) {
 		slog.Error("error during opening file", slog.Any("error", err))
 		return nil, err
 	}
-	defer origFile.Close()
+	defer func() {
+		if err = origFile.Close(); err != nil {
+			slog.Error("error during closing file", slog.Any("error", err))
+		}
+	}()
+
 	err = json.NewDecoder(origFile).Decode(&c)
 	if err != nil {
-		if err != io.EOF {
+		if errors.Is(err, io.EOF) {
 			slog.Error("error during Unmarshal", slog.Any("error", err))
 			return nil, err
 		}
@@ -74,6 +88,9 @@ func (fk fileKeyring) SetEntry(key string, data string) error {
 	con[key] = data
 	slog.Debug("con", slog.Any("map", con))
 	newJSON, err = json.MarshalIndent(con, "", "  ")
+	if err != nil {
+		return err
+	}
 
 	err = os.WriteFile(fk.file, newJSON, 0666)
 	if err != nil {
