@@ -48,13 +48,13 @@ func (m mockKeyring) tokenString(token *oauth2.Token) string {
 	return string(tokenByte)
 }
 
-func TestTokenFromKeyring(t *testing.T) {
+func TestTokenFromKeyring(t *testing.T) { //nolint: paralleltest // concurrent map writes.
 	validToken := &oauth2.Token{AccessToken: "your_token", Expiry: time.Now().AddDate(1, 0, 0)}
 	keyringH := mockKeyring{
 		storage: map[string]string{},
 	}
 	validTokenString := keyringH.tokenString(validToken)
-	keyringH.SetEntry(validKey, validTokenString)
+	_ = keyringH.SetEntry(validKey, validTokenString)
 	tests := []struct {
 		name       string
 		key        string
@@ -78,6 +78,7 @@ func TestTokenFromKeyring(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got, err := tokenFromKeyring(tt.key, tt.keyringH)
 			if err != nil && tt.errMessage == "" {
 				t.Errorf(errMsg, "tokenFromKeyring()", err, tt.errMessage)
@@ -99,6 +100,7 @@ func TestTokenFromKeyring(t *testing.T) {
 }
 
 func Test_saveToken(t *testing.T) {
+	t.Parallel()
 	keyringH := mockKeyring{
 		storage: map[string]string{},
 	}
@@ -139,6 +141,7 @@ func Test_saveToken(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			err := saveToken(tt.args.key, tt.args.token, tt.args.keyring)
 			if err != nil {
 				if tt.errMsg == "" {

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/Crandel/gmail/internal/accounts"
+	"github.com/Crandel/gmail/internal/env"
 	"github.com/Crandel/gmail/internal/file"
 )
 
@@ -19,14 +20,19 @@ const (
 	fileName = "config.json"
 )
 
-var configDir = fmt.Sprintf("%s/%s", os.Getenv("XDG_CONFIG_HOME"), dir)
-var filename = fmt.Sprintf("%s/%s", configDir, fileName)
-var ErrMailType = errors.New("mail type should be only gmail")
+var (
+	configDir = fmt.Sprintf("%s/%s", env.GetEnv("XDG_CONFIG_HOME", "~/.config"), dir)
+	filename  = fmt.Sprintf("%s/%s", configDir, fileName)
+
+	// ErrMailType is an config error type.
+	ErrMailType = errors.New("mail type should be only gmail")
+)
 
 type inputReader interface {
 	ReadString(delim byte) (string, error)
 }
 
+// GetFile return io.Reader for config file.
 func GetFile() (io.Reader, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -36,6 +42,7 @@ func GetFile() (io.Reader, error) {
 	return file, nil
 }
 
+// GetAccounts return account list from config file.
 func GetAccounts(reader io.Reader) (accounts.ListAccounts, error) {
 	listAccounts := accounts.ListAccounts{}
 	err := json.NewDecoder(reader).Decode(&listAccounts)
@@ -52,7 +59,12 @@ func readExistingConfig(filename string) (accs accounts.ListAccounts, err error)
 		slog.Error("error during opening file", slog.Any("error", err))
 		return nil, err
 	}
-	defer origFile.Close()
+	defer func() {
+		if err = origFile.Close(); err != nil {
+			slog.Error("error during closing file", slog.Any("error", err))
+		}
+	}()
+
 	accs, err = GetAccounts(origFile)
 	if err != nil {
 		slog.Error("error during Unmarshal", slog.Any("error", err))
@@ -62,6 +74,7 @@ func readExistingConfig(filename string) (accs accounts.ListAccounts, err error)
 	return accs, nil
 }
 
+// AddToConfig adds new user to existed config file.
 func AddToConfig() error {
 	err := file.CreateDirectory(configDir)
 	if err != nil {
@@ -75,7 +88,7 @@ func AddToConfig() error {
 	}
 	newAccount, err := addNewUser(reader)
 	if err != nil {
-		slog.Error("An error occured while reading input. Please try again", slog.Any("error", err))
+		slog.Error("An error occurred while reading input. Please try again", slog.Any("error", err))
 		return err
 	}
 	listAccounts = append(listAccounts, newAccount)
@@ -84,7 +97,7 @@ func AddToConfig() error {
 	var newJSON []byte
 	newJSON, err = json.MarshalIndent(listAccounts, "", "  ")
 	if err != nil {
-		slog.Error("error during marshalling", slog.Any("error", err))
+		slog.Error("error during marshaling", slog.Any("error", err))
 		return err
 	}
 	err = os.WriteFile(filename, newJSON, 0666)
