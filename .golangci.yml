@@ -68,16 +68,6 @@ linters-settings:
     # default is false: such cases aren't reported by default.
     check-blank: false
 
-    # List of functions to exclude from checking, where each entry is a single function to exclude.
-    # See https://github.com/kisielk/errcheck#excluding-functions for details.
-    exclude-functions:
-      - fmt:*
-      - io/ioutil:^Read.*
-
-    # path to a file containing a list of functions to exclude from checking
-    # see https://github.com/kisielk/errcheck#excluding-functions for details
-    #exclude: /path/to/file.txt
-
   funlen:
     lines: 60
     statements: 40
@@ -253,7 +243,7 @@ linters-settings:
     sections:
       - standard # Standard section: captures all standard packages.
       - default # Default section: contains all imports that could not be matched to another section type.
-      - prefix(github.com/Crandel/gmail_checker) # Custom section: groups all imports with the specified Prefix.
+      - prefix(github.com/Crandel/gmail) # Custom section: groups all imports with the specified Prefix.
       - blank # Blank section: contains all blank imports. This section is not present unless explicitly enabled.
       - dot # Dot section: contains all dot imports. This section is not present unless explicitly enabled.
       - localmodule # Local module section: contains all local packages. This section is not present unless explicitly enabled.

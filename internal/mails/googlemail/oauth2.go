@@ -118,7 +118,7 @@ func startServer() chan string {
 	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
 		code := r.URL.Query().Get("code")
 		codeChan <- code
-		fmt.Fprintf(w, "Authorization successful! You can close this window now.")
+		fmt.Fprintf(w, "Authorization successful! You can close this window now.") //nolint: errcheck
 		go func() {
 			_ = server.Shutdown(context.Background())
 		}()
