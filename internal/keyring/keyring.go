@@ -6,7 +6,8 @@ import (
 	k "github.com/zalando/go-keyring"
 )
 
-type KeyringHandler interface {
+// Handler is an interface to return value from keyring by key.
+type Handler interface {
 	GetEntry(key string) (string, error)
 	SetEntry(key string, data string) error
 }
@@ -14,7 +15,8 @@ type keyringHandler struct {
 	name string
 }
 
-func NewKeyring(name string) KeyringHandler {
+// NewKeyring is an constractor for keyringHandler.
+func NewKeyring(name string) Handler {
 	return keyringHandler{
 		name: name,
 	}

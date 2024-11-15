@@ -24,6 +24,7 @@ func (mr *MockBufioReader) ReadString(delim byte) (string, error) {
 }
 
 func TestAddNewUser(t *testing.T) {
+	t.Parallel()
 	type testAccount struct {
 		Short    string
 		Type     string
@@ -75,6 +76,7 @@ func (mr MockReader) Read(p []byte) (n int, err error) {
 }
 
 func TestGetAccounts(t *testing.T) {
+	t.Parallel()
 	type testCase struct {
 		name     string
 		input    io.Reader
@@ -106,6 +108,7 @@ func TestGetAccounts(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			gotAccounts, err := GetAccounts(tc.input)
 			if err != nil {
 				t.Errorf("GetAccounts() error = %v, wantErr %v", err, tc.err)

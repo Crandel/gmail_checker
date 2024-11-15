@@ -25,3 +25,4 @@ vendor/*
 
 # config
 config.json
+/.vscode/

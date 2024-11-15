@@ -12,6 +12,7 @@ const (
 	dir             = "mail"
 )
 
+// GetCacheDir return path to mail cache dir.
 func GetCacheDir() (string, error) {
 	cacheDir := env.GetEnv("XDG_CACHE_HOME", defaultCacheDir)
 	mailCacheDir := fmt.Sprintf("%s/%s", cacheDir, dir)
@@ -22,6 +23,7 @@ func GetCacheDir() (string, error) {
 	return mailCacheDir, nil
 }
 
+// CreateDirectory will create directory if not exists.
 func CreateDirectory(directory string) error {
 	if _, err := os.Stat(directory); err != nil && !os.IsNotExist(err) {
 		return err

@@ -5,56 +5,59 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
-	"os"
 	"strings"
 
 	"github.com/Crandel/gmail/internal/accounts"
 	"github.com/Crandel/gmail/internal/config"
+	"github.com/Crandel/gmail/internal/env"
 	"github.com/Crandel/gmail/internal/logging"
 	"github.com/Crandel/gmail/internal/mails/googlemail"
 )
 
 func main() {
 	ctx := context.Background()
-	debug := os.Getenv("DEBUG")
+
+	debug := env.GetEnv("DEBUG", "false")
 	logLevel := slog.LevelInfo
 	showSources := false
 	if debug == "1" {
 		showSources = true
 		logLevel = slog.LevelDebug
 	}
-
 	logging.InitLogger(logLevel, showSources)
+
 	addUserFlag := flag.Bool("add", false, "Add new user to specific mail client")
+	systemKeyringFlag := flag.Bool("system_keyring", false, "Use system keyring instead of file")
 
 	flag.Parse()
 
+	var err error
 	if *addUserFlag {
-		config.AddToConfig()
+		err = config.AddToConfig()
+		slog.ErrorContext(ctx, "failed to add user to config", slog.Any("error", err))
 		return
 	}
-	systemKeyringFlag := flag.Bool("system_keyring", false, "Use system keyring instead of file")
-	flag.Parse()
 
-	channel := make(chan string)
-	defer close(channel)
 	file, err := config.GetFile()
 	if err != nil {
-		slog.Error("error during get file", slog.Any("error", err))
+		slog.ErrorContext(ctx, "error during get file", slog.Any("error", err))
 		return
 	}
 	listAccounts, err := config.GetAccounts(file)
 	if err != nil {
-		slog.Error("unable to retrieve account list")
+		slog.ErrorContext(ctx, "unable to retrieve account list")
 		return
 	}
+
+	channel := make(chan string)
+	defer close(channel)
+
 	for _, acc := range listAccounts {
 		if acc.MailType == accounts.Gmail {
 			if googlemail.CheckOnline() {
 				go googlemail.GetGMailCount(ctx, channel, acc, *systemKeyringFlag)
 			}
 		}
-
 	}
 
 	accLen := len(listAccounts)
