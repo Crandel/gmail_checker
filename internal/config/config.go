@@ -13,6 +13,7 @@ import (
 	"github.com/Crandel/gmail/internal/accounts"
 	"github.com/Crandel/gmail/internal/env"
 	"github.com/Crandel/gmail/internal/file"
+	"github.com/Crandel/gmail/internal/mails/googlemail"
 )
 
 const (
@@ -35,6 +36,7 @@ type inputReader interface {
 // GetFile return io.Reader for config file.
 func GetFile() (io.Reader, error) {
 	file, err := os.Open(filename)
+	slog.Debug("GetFile filename " + fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +97,26 @@ func AddToConfig() error {
 		slog.Error("An error occurred while reading input. Please try again", slog.Any("error", err))
 		return err
 	}
+	if len(listAccounts) > 0 {
+		for i := range listAccounts {
+			if newAccount.ClientID == listAccounts[i].ClientID {
+				return fmt.Errorf("account with '%s' already exists", newAccount.ClientID)
+			}
+		}
+	}
+	if newAccount.MailType == accounts.Gmail {
+		fmt.Println("Please specify OAuth 2.0 Client config file")
+		clientConfigPath, err := reader.ReadString('\n')
+		clientConfigPath = strings.TrimSpace(clientConfigPath)
+		if err != nil {
+			return err
+		}
+		err = googlemail.SetConfig(newAccount.ClientID, clientConfigPath)
+		if err != nil {
+			return err
+		}
+	}
+
 	listAccounts = append(listAccounts, newAccount)
 	slog.Debug("Accounts list", slog.Any("list", listAccounts))
 

@@ -15,7 +15,10 @@ import (
 )
 
 const (
-	tokKey = "gmailTokenKey"
+	tokKey       = "gmailTokenKey"
+	redirectHost = "http://localhost"
+	redirectPort = ":8080"
+	endpoint     = "callback"
 )
 
 type keyringHandler interface {
@@ -40,6 +43,7 @@ func GetClient(ctx context.Context, config *oauth2.Config, systemKeyring bool) (
 	}
 	key := tokKey + config.ClientID
 	token, err := tokenFromKeyring(key, keyringH)
+	slog.Debug("token from keyring", slog.Any("token", token))
 	if err != nil {
 		token, err = getTokenFromWeb(ctx, config)
 		if err != nil || token == nil {
@@ -71,7 +75,8 @@ func GetClient(ctx context.Context, config *oauth2.Config, systemKeyring bool) (
 
 // Request a token from the web, then returns the retrieved token.
 func getTokenFromWeb(ctx context.Context, config *oauth2.Config) (*oauth2.Token, error) {
-	codeChan := startServer()
+	config.RedirectURL = fmt.Sprintf("%s%s/%s", redirectHost, redirectPort, endpoint)
+	codeChan := startServer(redirectPort, endpoint)
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 	fmt.Printf("Go to the following link in your browser then type the "+
 		"authorization code: \n%v\n", authURL)
@@ -111,11 +116,11 @@ func saveToken(key string, token *oauth2.Token, keyring keyringHandler) error {
 	return keyring.SetEntry(key, string(tokenByte))
 }
 
-func startServer() chan string {
+func startServer(port, endpoint string) chan string {
 	codeChan := make(chan string)
-	server := &http.Server{Addr: ":8080"}
+	server := &http.Server{Addr: port}
 
-	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/"+endpoint, func(w http.ResponseWriter, r *http.Request) {
 		code := r.URL.Query().Get("code")
 		codeChan <- code
 		fmt.Fprintf(w, "Authorization successful! You can close this window now.") //nolint: errcheck

@@ -54,7 +54,7 @@ func (fk fileKeyring) getMap() (content, error) {
 
 	err = json.NewDecoder(origFile).Decode(&c)
 	if err != nil {
-		if errors.Is(err, io.EOF) {
+		if !errors.Is(err, io.EOF) {
 			slog.Error("error during Unmarshal", slog.Any("error", err))
 			return nil, err
 		}
