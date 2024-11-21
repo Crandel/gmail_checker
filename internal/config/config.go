@@ -57,7 +57,11 @@ func readExistingConfig(filename string) (accs accounts.ListAccounts, err error)
 	origFile, err := os.Open(filename)
 	if err != nil {
 		slog.Error("error during opening file", slog.Any("error", err))
-		return nil, err
+		origFile, err = os.Create(filename)
+		if err != nil {
+			slog.Error("error during creation file", slog.Any("error", err))
+			return nil, err
+		}
 	}
 	defer func() {
 		if err = origFile.Close(); err != nil {

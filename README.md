@@ -4,7 +4,7 @@
 
 I use i3/Sway wm and want to have a notification for new emails in i3 status line.
 
-Without **$XDG_CONFIG_HOME/mail_checker/config.json** it will fail.
+Without **$XDG_CONFIG_HOME/mail/config.json** it will fail.
 
 In order to create `config.json` file with this structure.
 
