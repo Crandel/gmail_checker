@@ -34,7 +34,9 @@ func main() {
 	var err error
 	if *addUserFlag {
 		err = config.AddToConfig()
-		slog.ErrorContext(ctx, "failed to add user to config", slog.Any("error", err))
+		if err != nil {
+			slog.ErrorContext(ctx, "failed to add user to config", slog.Any("error", err))
+		}
 		return
 	}
 
