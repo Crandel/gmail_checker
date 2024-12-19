@@ -38,7 +38,7 @@ func GetClient(ctx context.Context, config *oauth2.Config, systemKeyring bool) (
 		}
 		keyringH, err = keyring.NewFileKeyring(keyringDir, tokKey)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create keyring handler: %w", err)
 		}
 	}
 	key := tokKey + config.ClientID
